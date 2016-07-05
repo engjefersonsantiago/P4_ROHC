@@ -245,20 +245,6 @@ class resubmit : public ActionPrimitive<const Data &> {
 
 REGISTER_PRIMITIVE(resubmit);
 
-// JEF: begin of modification
-//class modify_and_resubmit : public ActionPrimitive<const Data &> {
-//  void operator ()(const Data &field_list_id) {
-//    if (get_phv().has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
-//     get_phv().get_field("intrinsic_metadata.modify_and_resubmit_flag")
-//          .set(field_list_id);
-//    }
-//  }
-//};
-
-//REGISTER_PRIMITIVE(modify_and_resubmit);
-
-//#define ETH_LENGTH_BYTES 14
-
 class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
   // compressed_header: reference to the compressed header
   // umcompressed_header: reference to a ordered list of the umcompressed headers
@@ -268,22 +254,17 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
       return;
     }
  
-    size_t payload_size = packet_size.get_uint() /*- ETH_HEADER_LENGTH_BYTES */- compressed_header.get_nbytes_packet(); 
+    size_t payload_size = packet_size.get_uint() - compressed_header.get_nbytes_packet(); 
 
     size_t comp_header_size = compressed_header.get_nbytes_packet()-compressed_header.get_field(0).get_bytes().size();
     size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
     
     unsigned char *comp_buff = new unsigned char [comp_header_size + payload_size];
-    //unsigned char *comp_buff = new unsigned char [comp_header_size];
-    //unsigned char *umcomp_buff = new unsigned char [umcomp_header_size];
     unsigned char *umcomp_buff = new unsigned char [umcomp_header_size + payload_size];
 
     size_t comp_header_field_num = compressed_header.size();
     size_t umcomp_header_field_num = umcompressed_header.size();
    
-    //printf("\nCompressed Header Number of bytes: %d\n", (int)comp_header_size);
-    //printf("\nUmcompressed Header Number of bytes: %d\n", (int)umcomp_header_size);
-
     int index_comp_buff = 0;
     // 1 byte offset cause the first byte has the profile and header size information
     for (size_t f = 1; f < comp_header_field_num; f++) {
@@ -293,26 +274,20 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
          index_comp_buff++;
          c++;
       }
-   }
+    }
 
-   //for (size_t i = 0; i < comp_header_size; i++) printf("%d: %.2x\n", (int)i, comp_buff[i]);
+    rohc_d_ent.decompress_header(comp_buff, umcomp_buff, (size_t)comp_header_size + payload_size, (size_t)umcomp_header_size + payload_size);
 
-   //rohc_d_ent.decompress_header(comp_buff, umcomp_buff, (size_t)comp_header_size, (size_t)umcomp_header_size);
-   rohc_d_ent.decompress_header(comp_buff, umcomp_buff, (size_t)comp_header_size + payload_size, (size_t)umcomp_header_size + payload_size);
-
-   //for (size_t i = 0; i < umcomp_header_size; i++) printf("%d: %.2x\n", (int)i, umcomp_buff[i]);
-
-   for (size_t f = 0; f < umcomp_header_field_num; f++) {
-      int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
-      umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
-      umcomp_buff+=field_size; 
-   }
+    for (size_t f = 0; f < umcomp_header_field_num; f++) {
+       int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
+       umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
+       umcomp_buff+=field_size; 
+    }
 
   }
 };
 
 REGISTER_PRIMITIVE(rohc_decomp_header);
-// end of modification
 
 class recirculate : public ActionPrimitive<const Data &> {
   void operator ()(const Data &field_list_id) {
