@@ -105,14 +105,6 @@
                     32
                 ],
                 [
-                    "resubmit_flag",
-                    16
-                ],
-                [
-                    "modify_and_resubmit_flag",
-                    16
-                ],
-                [
                     "recirculate_flag",
                     16
                 ]
@@ -180,12 +172,24 @@
             "max_length": 64
         },
         {
-            "name": "mymeta_t",
+            "name": "rohc_meta_t",
             "id": 6,
             "fields": [
                 [
-                    "f1",
+                    "decompressed_flag",
                     8
+                ]
+            ],
+            "length_exp": null,
+            "max_length": null
+        },
+        {
+            "name": "packet_options_t",
+            "id": 7,
+            "fields": [
+                [
+                    "payload_size",
+                    32
                 ]
             ],
             "length_exp": null,
@@ -230,9 +234,15 @@
             "metadata": true
         },
         {
-            "name": "mymeta",
+            "name": "rohc_meta",
             "id": 6,
-            "header_type": "mymeta_t",
+            "header_type": "rohc_meta_t",
+            "metadata": true
+        },
+        {
+            "name": "packet_options",
+            "id": 7,
+            "header_type": "packet_options_t",
             "metadata": true
         }
     ],
@@ -266,6 +276,38 @@
                                 {
                                     "type": "regular",
                                     "value": "ethernet"
+                                }
+                            ]
+                        },
+                        {
+                            "op": "set",
+                            "parameters": [
+                                {
+                                    "type": "field",
+                                    "value": [
+                                        "packet_options",
+                                        "payload_size"
+                                    ]
+                                },
+                                {
+                                    "type": "expression",
+                                    "value": {
+                                        "type": "expression",
+                                        "value": {
+                                            "op": "-",
+                                            "left": {
+                                                "type": "field",
+                                                "value": [
+                                                    "standard_metadata",
+                                                    "packet_length"
+                                                ]
+                                            },
+                                            "right": {
+                                                "type": "hexstr",
+                                                "value": "0xe"
+                                            }
+                                        }
+                                    }
                                 }
                             ]
                         }
@@ -370,8 +412,100 @@
     "meter_arrays": [],
     "actions": [
         {
-            "name": "set_port",
+            "name": "_decompress_rtp",
             "id": 0,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "add_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "rtp_umcomp_header"
+                        }
+                    ]
+                },
+                {
+                    "op": "rohc_decomp_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "comp_header"
+                        },
+                        {
+                            "type": "header",
+                            "value": "rtp_umcomp_header"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "packet_options",
+                                "payload_size"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "add_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "rtp_umcomp_header"
+                        }
+                    ]
+                },
+                {
+                    "op": "remove_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "comp_header"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rohc_meta",
+                                "decompressed_flag"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "_nop",
+            "id": 1,
+            "runtime_data": [],
+            "primitives": []
+        },
+        {
+            "name": "_recirculate",
+            "id": 2,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "recirculate",
+                    "parameters": [
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "set_port",
+            "id": 3,
             "runtime_data": [
                 {
                     "name": "port",
@@ -398,99 +532,7 @@
             ]
         },
         {
-            "name": "_recirculate",
-            "id": 1,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "recirculate",
-                    "parameters": [
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "_nop",
-            "id": 2,
-            "runtime_data": [],
-            "primitives": []
-        },
-        {
-            "name": "_resubmit_rtp",
-            "id": 3,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "rohc_decomp_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "comp_header"
-                        },
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "packet_length"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "remove_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "comp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "mymeta",
-                                "f1"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "_resubmit_ip",
+            "name": "_decompress_ip",
             "id": 4,
             "runtime_data": [],
             "primitives": [
@@ -517,8 +559,8 @@
                         {
                             "type": "field",
                             "value": [
-                                "standard_metadata",
-                                "packet_length"
+                                "packet_options",
+                                "payload_size"
                             ]
                         }
                     ]
@@ -547,8 +589,8 @@
                         {
                             "type": "field",
                             "value": [
-                                "mymeta",
-                                "f1"
+                                "rohc_meta",
+                                "decompressed_flag"
                             ]
                         },
                         {
@@ -579,8 +621,8 @@
                         {
                             "match_type": "exact",
                             "target": [
-                                "mymeta",
-                                "f1"
+                                "rohc_meta",
+                                "decompressed_flag"
                             ],
                             "mask": null
                         }
@@ -608,19 +650,19 @@
                         {
                             "match_type": "exact",
                             "target": [
-                                "mymeta",
-                                "f1"
+                                "rohc_meta",
+                                "decompressed_flag"
                             ],
                             "mask": null
                         }
                     ],
                     "actions": [
                         "_nop",
-                        "_resubmit_ip"
+                        "_decompress_ip"
                     ],
                     "next_tables": {
                         "_nop": "_condition_2",
-                        "_resubmit_ip": "_condition_2"
+                        "_decompress_ip": "_condition_2"
                     },
                     "base_default_next": "_condition_2"
                 },
@@ -637,19 +679,19 @@
                         {
                             "match_type": "exact",
                             "target": [
-                                "mymeta",
-                                "f1"
+                                "rohc_meta",
+                                "decompressed_flag"
                             ],
                             "mask": null
                         }
                     ],
                     "actions": [
                         "_nop",
-                        "_resubmit_rtp"
+                        "_decompress_rtp"
                     ],
                     "next_tables": {
                         "_nop": null,
-                        "_resubmit_rtp": null
+                        "_decompress_rtp": null
                     },
                     "base_default_next": null
                 }
@@ -758,8 +800,8 @@
                         {
                             "match_type": "exact",
                             "target": [
-                                "mymeta",
-                                "f1"
+                                "rohc_meta",
+                                "decompressed_flag"
                             ],
                             "mask": null
                         }
@@ -819,13 +861,13 @@
     "field_lists": [
         {
             "id": 1,
-            "name": "resubmit_FL",
+            "name": "recirculate_FL",
             "elements": [
                 {
                     "type": "field",
                     "value": [
-                        "mymeta",
-                        "f1"
+                        "rohc_meta",
+                        "decompressed_flag"
                     ]
                 }
             ]
@@ -881,14 +923,6 @@
         [
             "intrinsic_metadata",
             "lf_field_list"
-        ],
-        [
-            "intrinsic_metadata",
-            "resubmit_flag"
-        ],
-        [
-            "intrinsic_metadata",
-            "modify_and_resubmit_flag"
         ],
         [
             "intrinsic_metadata",

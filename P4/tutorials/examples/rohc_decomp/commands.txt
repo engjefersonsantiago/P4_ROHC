@@ -4,6 +4,6 @@ table_set_default t_ingress_rtp _nop
 table_set_default t_recirc _nop;
 table_add t_ingress_1 set_port 0 => 2
 table_add t_ingress_1 set_port 1 => 3
-table_add t_ingress_ip _resubmit_ip 0 =>
-table_add t_ingress_rtp _resubmit_rtp 0 =>
+table_add t_ingress_ip _decompress_ip 0 =>
+table_add t_ingress_rtp _decompress_rtp 0 =>
 table_add t_recirc _recirculate 1 =>

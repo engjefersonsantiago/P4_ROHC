@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#define HEADER_SIZE_ETHERNET 14
+
 header_type ethernet_t {
     fields {
         bit<48> dstAddr;
@@ -66,7 +68,7 @@ header_type rohc_meta_t {
 
 header_type packet_options_t {
     fields {
-        bit<16> payload_size;
+        bit<32> payload_size;
     }
 }
 
@@ -85,7 +87,7 @@ parser start {
 
 parser parse_ethernet {
     extract(ethernet);
-
+    set_metadata(packet_options.payload_size, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);
     return select(ethernet.etherType) {
         0xDD00 mask 0xff00 : parse_comp;
         0x7777             : parse_umcomp;
@@ -119,26 +121,20 @@ field_list recirculate_FL {
     rohc_meta.decompressed_flag;
 }
 
-#define HEADER_SIZE_ETHERNET
-
-action _recirculate_ip() {
+action _decompress_ip() {
     add_header(ip_umcomp_header);
-    if(valid(ethernet)) {
-    	rohc_decomp_header(comp_header, ip_umcomp_header, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);    
-        add_header(ip_umcomp_header);
-        remove_header(comp_header);   
-        modify_field(rohc_meta.decompressed_flag, 1);
-    }
+    rohc_decomp_header(comp_header, ip_umcomp_header, packet_options.payload_size);    
+    add_header(ip_umcomp_header);
+    remove_header(comp_header);   
+    modify_field(rohc_meta.decompressed_flag, 1);
 }
 
-action _recirculate_rtp() {
-    if(valid(ethernet)) {
-    	add_header(rtp_umcomp_header);  
-    	 rohc_decomp_header(comp_header, rtp_umcomp_header, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);    
-    	 add_header(rtp_umcomp_header);
-    	 remove_header(comp_header);   
-    	 modify_field(rohc_meta.decompressed_flag, 1);
-    }
+action _decompress_rtp() {
+    add_header(rtp_umcomp_header);  
+    rohc_decomp_header(comp_header, rtp_umcomp_header, packet_options.payload_size);    
+    add_header(rtp_umcomp_header);
+    remove_header(comp_header);   
+    modify_field(rohc_meta.decompressed_flag, 1);
 }
 
 
@@ -157,7 +153,7 @@ table t_ingress_ip {
         rohc_meta.decompressed_flag : exact;
     }
     actions {
-        _nop; _recirculate_ip;
+        _nop; _decompress_ip;
     }
     size : 128;
 }
@@ -167,7 +163,7 @@ table t_ingress_rtp {
         rohc_meta.decompressed_flag : exact;
     }
     actions {
-        _nop; _recirculate_rtp;
+        _nop; _decompress_rtp;
     }
     size : 128;
 }
@@ -175,7 +171,6 @@ table t_ingress_rtp {
 action _recirculate() {
     recirculate(recirculate_FL);
 }
-
 
 table t_recirc {
     reads {
