@@ -29,6 +29,9 @@
 *.out
 *.app
 
-#makefiles (auto generated)
+# Makefiles (auto generated)
 Makefile
 Makefile.in
+
+#
+*.sw*
