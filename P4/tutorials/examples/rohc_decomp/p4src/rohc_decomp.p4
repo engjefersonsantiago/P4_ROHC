@@ -28,6 +28,12 @@ header_type ip_umcomp_header_t {
       }
 }
 
+header_type udp_umcomp_header_t {
+    fields {
+        bit<224> all_fields;
+      }
+}
+
 header_type rtp_umcomp_header_t {
     fields {
         bit<320> all_fields;
@@ -40,8 +46,6 @@ header_type intrinsic_metadata_t {
         bit<4> egress_rid;
         bit<16> mcast_hash;
         bit<32> lf_field_list;
-        bit<16> resubmit_flag;
-        bit<16> modify_and_resubmit_flag;
         bit<16> recirculate_flag;
     }
 }
@@ -54,9 +58,9 @@ header_type comp_header_t {
     length : (id_len&0x3f)+1;
  }
 
-header_type mymeta_t {
+header_type rohc_meta_t {
     fields {
-        bit<8> f1;
+        bit<8> decompressed_flag;
     }
 }
 
@@ -72,7 +76,7 @@ header ip_umcomp_header_t ip_umcomp_header;
 header rtp_umcomp_header_t rtp_umcomp_header;
 
 metadata intrinsic_metadata_t intrinsic_metadata;
-metadata mymeta_t mymeta;
+metadata rohc_meta_t rohc_meta;
 metadata packet_options_t packet_options;
 
 parser start {
@@ -109,39 +113,38 @@ action _nop() {
 
 action set_port(in bit<9> port) {
    modify_field(standard_metadata.egress_spec, port);
-   //standard_metadata.egress_spec = port;
 }
 
-field_list resubmit_FL {
-    mymeta.f1;
+field_list recirculate_FL {
+    rohc_meta.decompressed_flag;
 }
 
-action _resubmit_ip() {
+#define HEADER_SIZE_ETHERNET
+
+action _recirculate_ip() {
     add_header(ip_umcomp_header);
-    //rohc_decomp_header(comp_header, ip_umcomp_header);    
-    rohc_decomp_header(comp_header, ip_umcomp_header, standard_metadata.packet_length);    
-    add_header(ip_umcomp_header);
-    remove_header(comp_header);   
-    modify_field(mymeta.f1, 1);
-    //recirculate(resubmit_FL);
-    //modify_and_resubmit(resubmit_FL);
+    if(valid(ethernet)) {
+    	rohc_decomp_header(comp_header, ip_umcomp_header, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);    
+        add_header(ip_umcomp_header);
+        remove_header(comp_header);   
+        modify_field(rohc_meta.decompressed_flag, 1);
+    }
 }
 
-action _resubmit_rtp() {
-    add_header(rtp_umcomp_header);
-    //rohc_decomp_header(comp_header, rtp_umcomp_header);    
-    rohc_decomp_header(comp_header, rtp_umcomp_header, standard_metadata.packet_length);    
-    add_header(rtp_umcomp_header);
-    remove_header(comp_header);   
-    modify_field(mymeta.f1, 1);
-    //recirculate(resubmit_FL2);
-    //modify_and_resubmit(resubmit_FL2);
+action _recirculate_rtp() {
+    if(valid(ethernet)) {
+    	add_header(rtp_umcomp_header);  
+    	 rohc_decomp_header(comp_header, rtp_umcomp_header, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);    
+    	 add_header(rtp_umcomp_header);
+    	 remove_header(comp_header);   
+    	 modify_field(rohc_meta.decompressed_flag, 1);
+    }
 }
 
 
 table t_ingress_1 {
     reads {
-        mymeta.f1 : exact;
+        rohc_meta.decompressed_flag : exact;
     }
     actions {
         _nop; set_port;
@@ -151,33 +154,32 @@ table t_ingress_1 {
 
 table t_ingress_ip {
     reads {
-        mymeta.f1 : exact;
+        rohc_meta.decompressed_flag : exact;
     }
     actions {
-        _nop; _resubmit_ip;
+        _nop; _recirculate_ip;
     }
     size : 128;
 }
 
 table t_ingress_rtp {
     reads {
-        mymeta.f1 : exact;
+        rohc_meta.decompressed_flag : exact;
     }
     actions {
-        _nop; _resubmit_rtp;
+        _nop; _recirculate_rtp;
     }
     size : 128;
 }
 
 action _recirculate() {
-    //modify_field(mymeta.f1, 0);
-    recirculate(resubmit_FL);
+    recirculate(recirculate_FL);
 }
 
 
 table t_recirc {
     reads {
-        mymeta.f1 : exact;
+        rohc_meta.decompressed_flag : exact;
     }
     actions {
         _nop; _recirculate;

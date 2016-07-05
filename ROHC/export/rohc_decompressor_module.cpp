@@ -45,15 +45,15 @@ int RohcDecompressorEntity::decompress_init()
 	 *  - in Unidirectional mode (U-mode).
 	 */
 	printf("\ncreate the ROHC decompressor\n");
-	decompressor_state_jef = rohc_decomp_new2(ROHC_LARGE_CID, 4, ROHC_U_MODE);
-	if(decompressor_state_jef == NULL)
+	decomp_state = rohc_decomp_new2(ROHC_LARGE_CID, 4, ROHC_U_MODE);
+	if(decomp_state == NULL)
 	{
 		printf("\nfailed create the ROHC decompressor\n");
 		goto error;
 	}
 
 	/* Enable Debug trace */
-	if (!rohc_decomp_set_traces_cb2(decompressor_state_jef, print_rohc_traces, NULL)) {
+	if (!rohc_decomp_set_traces_cb2(decomp_state, print_rohc_traces, NULL)) {
 		printf("\nfailed to enable traces\n");
 		goto error;
 	}
@@ -62,10 +62,10 @@ int RohcDecompressorEntity::decompress_init()
 	for (int i = 0; i <= ROHC_PROFILE_IP; i++) {
 		const char *profile_name = rohc_get_profile_descr((rohc_profile_t)i); 	
 		printf("\nEnable %s ROHC decompression profile\n", profile_name);
-		if(!rohc_decomp_enable_profile(decompressor_state_jef, (rohc_profile_t)i))
+		if(!rohc_decomp_enable_profile(decomp_state, (rohc_profile_t)i))
 		{
 			printf("\nfailed to enable the %s profile\n", profile_name);
-			rohc_decomp_free(decompressor_state_jef);
+			rohc_decomp_free(decomp_state);
 			goto error;
 		}
 	}
@@ -109,7 +109,7 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 
 	/* Now, decompress this fake ROHC packet */
 	printf("\ndecompress the ROHC packet\n");
-	status = rohc_decompress3(decompressor_state_jef, rohc_packet, &ip_packet, NULL, NULL); //Feedback packets not suppported
+	status = rohc_decompress3(decomp_state, rohc_packet, &ip_packet, NULL, NULL); //Feedback packets not suppported
 	printf("\n");
 	if(status == ROHC_STATUS_OK)
 	{
@@ -157,7 +157,7 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 	return 0;
 
 release_decompressor:
-	rohc_decomp_free(decompressor_state_jef);
+	rohc_decomp_free(decomp_state);
 	
 	printf("\nan error occured during program execution, abort program\n");
 	return 1;

@@ -246,16 +246,18 @@ class resubmit : public ActionPrimitive<const Data &> {
 REGISTER_PRIMITIVE(resubmit);
 
 // JEF: begin of modification
-class modify_and_resubmit : public ActionPrimitive<const Data &> {
-  void operator ()(const Data &field_list_id) {
-    if (get_phv().has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
-      get_phv().get_field("intrinsic_metadata.modify_and_resubmit_flag")
-          .set(field_list_id);
-    }
-  }
-};
+//class modify_and_resubmit : public ActionPrimitive<const Data &> {
+//  void operator ()(const Data &field_list_id) {
+//    if (get_phv().has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
+//     get_phv().get_field("intrinsic_metadata.modify_and_resubmit_flag")
+//          .set(field_list_id);
+//    }
+//  }
+//};
 
-REGISTER_PRIMITIVE(modify_and_resubmit);
+//REGISTER_PRIMITIVE(modify_and_resubmit);
+
+//#define ETH_LENGTH_BYTES 14
 
 class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
   // compressed_header: reference to the compressed header
@@ -266,7 +268,7 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
       return;
     }
  
-	size_t payload_size = packet_size.get_uint() - 14 - compressed_header.get_nbytes_packet(); 
+    size_t payload_size = packet_size.get_uint() /*- ETH_HEADER_LENGTH_BYTES */- compressed_header.get_nbytes_packet(); 
 
     size_t comp_header_size = compressed_header.get_nbytes_packet()-compressed_header.get_field(0).get_bytes().size();
     size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();

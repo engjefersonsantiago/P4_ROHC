@@ -65,7 +65,7 @@ class RohcDecompressorEntity {
 	private:
 		// define ROHC decompressor
 		// There is a best way to keep the state of the compressor instead declaring it as global?
-		struct rohc_decomp *decompressor_state_jef;       /* the ROHC decompressor */
+		struct rohc_decomp *decomp_state;       /* the ROHC decompressor */
 
 		static void print_rohc_traces(void *const priv_ctxt,
 		                              const rohc_trace_level_t level,
