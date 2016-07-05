@@ -255,7 +255,6 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
     }
  
     size_t payload_size = packet_size.get_uint() - compressed_header.get_nbytes_packet(); 
-
     size_t comp_header_size = compressed_header.get_nbytes_packet()-compressed_header.get_field(0).get_bytes().size();
     size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
     

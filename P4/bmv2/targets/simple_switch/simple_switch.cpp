@@ -102,9 +102,6 @@ SimpleSwitch::SimpleSwitch(int max_port, bool enable_swap)
   force_arith_field("intrinsic_metadata", "lf_field_list");
   force_arith_field("intrinsic_metadata", "mcast_grp");
   force_arith_field("intrinsic_metadata", "resubmit_flag");
-  // JEF: begin modification
-  force_arith_field("intrinsic_metadata", "modify_and_resubmit_flag");
-  // end modification
   force_arith_field("intrinsic_metadata", "egress_rid");
   force_arith_field("intrinsic_metadata", "recirculate_flag");
 
@@ -296,12 +293,7 @@ SimpleSwitch::ingress_thread() {
     Parser *parser = this->get_parser("parser");
     Pipeline *ingress_mau = this->get_pipeline("ingress");
    
-    // JEF: begin modification 
-    // Wrap around to rebuild the headers after updating
-    Deparser *deparser = this->get_deparser("deparser");
-    // end modification
-
-    phv = packet->get_phv();
+   phv = packet->get_phv();
 
     int ingress_port = packet->get_ingress_port();
     (void) ingress_port;
@@ -390,32 +382,6 @@ SimpleSwitch::ingress_thread() {
         continue;
       }
     }
-
-    // JEF: begin modification
-    // MODIFY AND RESUBMIT
-    if (phv->has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
-
-      Field &f_m_resubmit = phv->get_field("intrinsic_metadata.modify_and_resubmit_flag");
-      if (f_m_resubmit.get_int()) {
-        BMLOG_DEBUG_PKT(*packet, "Modifying and resumitting the packet");
-        // get the packet ready for being parsed again at the beginning of
-        // ingress
-       
-        // It is the only way to recovery the "updated" header. Any hint??? 
-        deparser->deparse(packet.get());
- 
-        packet->restore_buffer_state(packet_in_state);
-        p4object_id_t field_list_id = f_m_resubmit.get_int();
-        f_m_resubmit.set(0);
-        // TODO(antonin): a copy is not needed here, but I don't yet have an
-        // optimized way of doing this
-        auto packet_copy = copy_ingress_pkt(
-            packet, PKT_INSTANCE_TYPE_RESUBMIT, field_list_id);
-        input_buffer.push_front(std::move(packet_copy));
-        continue;
-      }
-    }
-    // end modification
 
     Field &f_instance_type = phv->get_field("standard_metadata.instance_type");
 
