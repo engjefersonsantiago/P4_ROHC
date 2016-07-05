@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: rohc
+Version: 0.1
+Summary: Python binding for the ROHC library
+Home-page: https://rohc-lib.org/
+Author: Didier Barvaux
+Author-email: <didier@barvaux.org>
+License: LGPL version 2.1 or later
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Topic :: System :: Networking
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Intended Audience :: Telecommunications Industry
+Classifier: Intended Audience :: Developers
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3

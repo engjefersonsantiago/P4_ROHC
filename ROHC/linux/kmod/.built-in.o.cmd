@@ -1,0 +1,1 @@
+cmd_/home/jef/Doctorate/Research/P4_ROHC/ROHC/linux/kmod/built-in.o :=  rm -f /home/jef/Doctorate/Research/P4_ROHC/ROHC/linux/kmod/built-in.o; ar rcsD /home/jef/Doctorate/Research/P4_ROHC/ROHC/linux/kmod/built-in.o

@@ -1,0 +1,14 @@
+table_set_default send_frame _drop
+table_set_default forward _drop
+table_add send_frame rewrite_mac 1 => 00:aa:bb:00:00:00
+table_add send_frame rewrite_mac 2 => 00:aa:bb:00:00:01
+table_add forward set_dmac 10.0.1.1 => 00:04:00:00:00:00
+table_add forward set_dmac 10.0.2.1 => 00:04:00:00:00:01
+table_indirect_create_group ecmp_group
+table_indirect_create_member ecmp_group _drop
+table_indirect_create_member ecmp_group set_nhop 10.0.1.1 1
+table_indirect_create_member ecmp_group set_nhop 10.0.2.1 2
+table_indirect_add_member_to_group ecmp_group 1 0
+table_indirect_add_member_to_group ecmp_group 2 0
+table_indirect_set_default ecmp_group 0
+table_indirect_add_with_group ecmp_group 10.0.0.1/32 => 0
