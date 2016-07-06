@@ -187,5 +187,9 @@ void RohcCompressorEntity::dump_packet(const struct rohc_buf packet)
 	}
 }
 
+RohcCompressorEntity::~RohcCompressorEntity() {
+	rohc_comp_free(comp_state);
+}
+
 } // end namespace
 

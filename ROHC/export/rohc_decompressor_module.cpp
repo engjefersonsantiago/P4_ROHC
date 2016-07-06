@@ -31,9 +31,6 @@
 /* includes required to use the decompression part of the ROHC library */
 #include "rohc_decompressor_module.h"
 
-/** The payload for the fake IP packet */
-#define FAKE_PAYLOAD "hello, ROHC world!"
-
 namespace ROHC {
 
 // Create ROHC decompressor
@@ -187,7 +184,7 @@ void RohcDecompressorEntity::dump_packet(const struct rohc_buf packet)
 	}
 }
 
-virtual RohcDecompressorEntity::~RohcDecompressorEntity() {
+RohcDecompressorEntity::~RohcDecompressorEntity() {
 	rohc_decomp_free(decomp_state);
 }
 
