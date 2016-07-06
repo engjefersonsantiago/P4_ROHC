@@ -89,9 +89,9 @@ parser parse_ethernet {
     extract(ethernet);
     set_metadata(packet_options.payload_size, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);
     return select(ethernet.etherType) {
-        0xDD00 mask 0xff00 : parse_comp;
-        0x7777             : parse_umcomp;
-        default            : ingress;
+        0xDD00    : parse_comp;
+        0x7777    : parse_umcomp;
+        default   : ingress;
     }
 }
 
@@ -122,19 +122,15 @@ field_list recirculate_FL {
 }
 
 action _decompress_ip() {
-    add_header(ip_umcomp_header);
     rohc_decomp_header(comp_header, ip_umcomp_header, packet_options.payload_size);    
-    add_header(ip_umcomp_header);
-    remove_header(comp_header);   
     modify_field(rohc_meta.decompressed_flag, 1);
+    modify_field(ethernet.etherType, 0x0800);
 }
 
 action _decompress_rtp() {
-    add_header(rtp_umcomp_header);  
     rohc_decomp_header(comp_header, rtp_umcomp_header, packet_options.payload_size);    
-    add_header(rtp_umcomp_header);
-    remove_header(comp_header);   
     modify_field(rohc_meta.decompressed_flag, 1);
+    modify_field(ethernet.etherType, 0x0800);
 }
 
 

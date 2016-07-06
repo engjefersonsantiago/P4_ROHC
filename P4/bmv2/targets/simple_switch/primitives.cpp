@@ -253,7 +253,7 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
       umcompressed_header.mark_invalid();
       return;
     }
- 
+
     size_t payload_size = packet_size.get_uint() - compressed_header.get_nbytes_packet(); 
     size_t comp_header_size = compressed_header.get_nbytes_packet()-compressed_header.get_field(0).get_bytes().size();
     size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
@@ -263,7 +263,8 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
 
     size_t comp_header_field_num = compressed_header.size();
     size_t umcomp_header_field_num = umcompressed_header.size();
-   
+  
+    // Initialize the decompression data structures 
     int index_comp_buff = 0;
     // 1 byte offset cause the first byte has the profile and header size information
     for (size_t f = 1; f < comp_header_field_num; f++) {
@@ -275,14 +276,22 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
       }
     }
 
+    // Perform the header decompression
     rohc_d_ent.decompress_header(comp_buff, umcomp_buff, (size_t)comp_header_size + payload_size, (size_t)umcomp_header_size + payload_size);
 
+    // Modifiy the fields in the new umpressed header
     for (size_t f = 0; f < umcomp_header_field_num; f++) {
        int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
        umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
        umcomp_buff+=field_size; 
     }
 
+    // Removing the compressed header
+    compressed_header.mark_invalid();
+
+    // Mark umcompressed header as valid
+    umcompressed_header.mark_valid();
+ 
   }
 };
 
@@ -401,6 +410,6 @@ REGISTER_PRIMITIVE_W_NAME("truncate", truncate_);
 // primitives could also be placed in simple_switch.cpp directly), but I need
 // this dummy function if I want to keep the primitives in their own file
 int import_primitives() {
-  rohc_d_ent.decompress_init();
+  rohc_d_ent.decompress_init(false);
   return 0;
 }

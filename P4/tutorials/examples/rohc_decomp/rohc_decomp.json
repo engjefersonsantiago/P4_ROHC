@@ -324,7 +324,7 @@
                     "transitions": [
                         {
                             "value": "0xdd00",
-                            "mask": "0xff00",
+                            "mask": null,
                             "next_state": "parse_comp"
                         },
                         {
@@ -417,15 +417,6 @@
             "runtime_data": [],
             "primitives": [
                 {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                },
-                {
                     "op": "rohc_decomp_header",
                     "parameters": [
                         {
@@ -446,24 +437,6 @@
                     ]
                 },
                 {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "remove_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "comp_header"
-                        }
-                    ]
-                },
-                {
                     "op": "modify_field",
                     "parameters": [
                         {
@@ -476,6 +449,22 @@
                         {
                             "type": "hexstr",
                             "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x800"
                         }
                     ]
                 }
@@ -537,15 +526,6 @@
             "runtime_data": [],
             "primitives": [
                 {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "ip_umcomp_header"
-                        }
-                    ]
-                },
-                {
                     "op": "rohc_decomp_header",
                     "parameters": [
                         {
@@ -566,24 +546,6 @@
                     ]
                 },
                 {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "ip_umcomp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "remove_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "comp_header"
-                        }
-                    ]
-                },
-                {
                     "op": "modify_field",
                     "parameters": [
                         {
@@ -596,6 +558,22 @@
                         {
                             "type": "hexstr",
                             "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x800"
                         }
                     ]
                 }

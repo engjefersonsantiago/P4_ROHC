@@ -37,44 +37,50 @@
 namespace ROHC {
 
 // Create ROHC decompressor
-int RohcDecompressorEntity::decompress_init()
+int RohcDecompressorEntity::decompress_init(bool debug_enable)
 {
 	/* Create a ROHC decompressor to operate:
 	 *  - with large CIDs,
 	 *  - with the maximum of 5 streams (MAX_CID = 4),
 	 *  - in Unidirectional mode (U-mode).
 	 */
-	printf("\ncreate the ROHC decompressor\n");
+
+  decomp_debug_enable = debug_enable;
+	if (decomp_debug_enable) printf("\ncreate the ROHC decompressor\n");
+
 	decomp_state = rohc_decomp_new2(ROHC_LARGE_CID, 4, ROHC_U_MODE);
+
 	if(decomp_state == NULL)
 	{
-		printf("\nfailed create the ROHC decompressor\n");
-		goto error;
+	  if (decomp_debug_enable) printf("\nfailed create the ROHC decompressor\n");
+	  goto error;
 	}
 
 	/* Enable Debug trace */
-	if (!rohc_decomp_set_traces_cb2(decomp_state, print_rohc_traces, NULL)) {
-		printf("\nfailed to enable traces\n");
-		goto error;
-	}
+	if (decomp_debug_enable){ 
+    if (!rohc_decomp_set_traces_cb2(decomp_state, print_rohc_traces, NULL)) {
+	    if (decomp_debug_enable) printf("\nfailed to enable traces\n");
+	  	goto error;	  
+    }
+  }
 
 	/* Enable the decompression profiles you need */
 	for (int i = 0; i <= ROHC_PROFILE_IP; i++) {
 		const char *profile_name = rohc_get_profile_descr((rohc_profile_t)i); 	
-		printf("\nEnable %s ROHC decompression profile\n", profile_name);
+	  if (decomp_debug_enable) printf("\nEnable %s ROHC decompression profile\n", profile_name);
 		if(!rohc_decomp_enable_profile(decomp_state, (rohc_profile_t)i))
 		{
-			printf("\nfailed to enable the %s profile\n", profile_name);
+			if (decomp_debug_enable) printf("\nfailed to enable the %s profile\n", profile_name);
 			rohc_decomp_free(decomp_state);
 			goto error;
 		}
 	}
 	
-	printf("\nDecompressor initialization ended successfully.\n");
+	if (decomp_debug_enable) printf("\nDecompressor initialization ended successfully.\n");
 	return 0;
 
 error:
-	printf("\nan error occured during program execution, abort program\n");
+	if (decomp_debug_enable) printf("\nan error occured during program execution, abort program\n");
 	return 1;
 }
 
@@ -99,7 +105,7 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 	size_t i;
 
 	/* create a fake ROHC packet for the purpose of this program */
-	printf("\nbuild a ROHC packet\n");
+	if (decomp_debug_enable) printf("\nbuild a ROHC packet\n");
 	for (rohc_packet.len = 0; rohc_packet.len < comp_header_size; rohc_packet.len++) {
 		rohc_buf_byte_at(rohc_packet, rohc_packet.len) = compressed_header_buffer[rohc_packet.len];
 	}
@@ -108,23 +114,17 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 	dump_packet(rohc_packet);
 
 	/* Now, decompress this fake ROHC packet */
-	printf("\ndecompress the ROHC packet\n");
+	if (decomp_debug_enable) printf("\ndecompress the ROHC packet\n");
 	status = rohc_decompress3(decomp_state, rohc_packet, &ip_packet, NULL, NULL); //Feedback packets not suppported
-	printf("\n");
+	if (decomp_debug_enable) printf("\n");
 	if(status == ROHC_STATUS_OK)
 	{
 		/* decompression is successful */
 		if(!rohc_buf_is_empty(ip_packet))
 		{
-        	//if (ip_packet.len != umcomp_header_size) {
-			//	printf("\nNo space available in the umcompressed buffer. Uncompressed header has %d bytes, while buffer has %d bytes\n", 
-			//			(int)ip_packet.len, (int)umcomp_header_size);
-			//	goto release_decompressor;
-			//}
-
-			/* ip_packet.len bytes of decompressed IP data available in
+ 			/* ip_packet.len bytes of decompressed IP data available in
 			 * ip_packet: dump the IP packet on the standard output */
-			printf("packet resulting from the ROHC decompression:\n");
+			if (decomp_debug_enable) printf("packet resulting from the ROHC decompression:\n");
 			dump_packet(ip_packet);
  			//for (i = 0; i < ip_packet.len; i++) {
  			for (i = 0; i < umcomp_header_size; i++) {
@@ -141,25 +141,25 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 			 *    ROHC packet
 			 *  - the ROHC packet was a feedback-only packet, it contained only
 			 *    feedback information, so there was nothing to decompress */
-			printf("no packet decompressed");
+			if (decomp_debug_enable) printf("no packet decompressed");
 		}
 	}
 	else
 	{
 		/* failure: decompressor failed to decompress the ROHC packet */
-		printf("\ndecompression of fake ROHC packet failed\n");
+		if (decomp_debug_enable) printf("\ndecompression of fake ROHC packet failed\n");
 		
 		goto release_decompressor;
 	}
 
-	printf("\nThe program ended successfully.\n");
+	if (decomp_debug_enable) printf("\nThe program ended successfully.\n");
 
 	return 0;
 
 release_decompressor:
 	rohc_decomp_free(decomp_state);
 	
-	printf("\nan error occured during program execution, abort program\n");
+	if (decomp_debug_enable) printf("\nan error occured during program execution, abort program\n");
 	return 1;
 }
 
@@ -175,15 +175,15 @@ void RohcDecompressorEntity::dump_packet(const struct rohc_buf packet)
 
 	for(i = 0; i < packet.len; i++)
 	{
-		printf("0x%02x ", rohc_buf_byte_at(packet, i));
+		if (decomp_debug_enable) printf("0x%02x ", rohc_buf_byte_at(packet, i));
 		if(i != 0 && ((i + 1) % 8) == 0)
 		{
-			printf("\n");
+			if (decomp_debug_enable) printf("\n");
 		}
 	}
 	if(i != 0 && ((i + 1) % 8) != 0) /* be sure to go to the line */
 	{
-		printf("\n");
+		if (decomp_debug_enable) printf("\n");
 	}
 }
 
