@@ -61,12 +61,12 @@ class RohcDecompressorEntity {
 		int decompress_init(bool debug_enable);
 		int decompress_header(unsigned char *compressed_header_buffer, unsigned char *umcompressed_header_buffer,
 								size_t comp_header_size, size_t umcomp_header_size);
-	
+		virtual ~RohcDecompressorEntity();
 	private:
 		// define ROHC decompressor
 		// There is a best way to keep the state of the compressor instead declaring it as global?
 		struct rohc_decomp *decomp_state;       /* the ROHC decompressor */
-    bool decomp_debug_enable = true;
+    	bool decomp_debug_enable = true;
 		static void print_rohc_traces(void *const priv_ctxt,
 		                              const rohc_trace_level_t level,
 		                              const rohc_trace_entity_t entity,
