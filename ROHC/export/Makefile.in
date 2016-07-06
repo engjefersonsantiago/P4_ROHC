@@ -98,20 +98,21 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-librohc_decompressor_module_la_DEPENDENCIES =  \
+librohc_compressor_module_la_DEPENDENCIES =  \
 	$(top_builddir)/src/librohc.la $(am__DEPENDENCIES_1)
-am_librohc_decompressor_module_la_OBJECTS =  \
-	librohc_decompressor_module_la-rohc_decompressor_module.lo
-librohc_decompressor_module_la_OBJECTS =  \
-	$(am_librohc_decompressor_module_la_OBJECTS)
+am_librohc_compressor_module_la_OBJECTS =  \
+	librohc_compressor_module_la-rohc_compressor_module.lo \
+	librohc_compressor_module_la-rohc_decompressor_module.lo
+librohc_compressor_module_la_OBJECTS =  \
+	$(am_librohc_compressor_module_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-librohc_decompressor_module_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+librohc_compressor_module_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(librohc_decompressor_module_la_CXXFLAGS) $(CXXFLAGS) \
-	$(librohc_decompressor_module_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(librohc_compressor_module_la_CXXFLAGS) $(CXXFLAGS) \
+	$(librohc_compressor_module_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -146,8 +147,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(librohc_decompressor_module_la_SOURCES)
-DIST_SOURCES = $(librohc_decompressor_module_la_SOURCES)
+SOURCES = $(librohc_compressor_module_la_SOURCES)
+DIST_SOURCES = $(librohc_compressor_module_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -352,25 +353,27 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 exportdir = $(docdir)/export
-noinst_LTLIBRARIES = librohc_decompressor_module.la
-librohc_decompressor_module_la_CXXFLAGS = \
+noinst_LTLIBRARIES = librohc_compressor_module.la
+librohc_compressor_module_la_CXXFLAGS = \
 	$(configure_cflags) 
 
-librohc_decompressor_module_la_CPPFLAGS = \
+librohc_compressor_module_la_CPPFLAGS = \
 	-I$(top_srcdir)/src/common \
+	-I$(top_srcdir)/src/comp \
 	-I$(top_srcdir)/src/decomp
 
-librohc_decompressor_module_la_LDFLAGS = \
+librohc_compressor_module_la_LDFLAGS = \
 	$(configure_ldflags)
 
-librohc_decompressor_module_la_SOURCES = \
+librohc_compressor_module_la_SOURCES = \
+	rohc_compressor_module.cpp \
 	rohc_decompressor_module.cpp
 
-librohc_decompressor_module_la_LIBADD = \
+librohc_compressor_module_la_LIBADD = \
 	$(top_builddir)/src/librohc.la \
 	$(additional_platform_libs)
 
-pkginclude_HEADERS = rohc_decompressor_module.h
+pkginclude_HEADERS = rohc_decompressor_module.h rohc_compressor_module.h
 all: all-am
 
 .SUFFIXES:
@@ -417,8 +420,8 @@ clean-noinstLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-librohc_decompressor_module.la: $(librohc_decompressor_module_la_OBJECTS) $(librohc_decompressor_module_la_DEPENDENCIES) $(EXTRA_librohc_decompressor_module_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(librohc_decompressor_module_la_LINK)  $(librohc_decompressor_module_la_OBJECTS) $(librohc_decompressor_module_la_LIBADD) $(LIBS)
+librohc_compressor_module.la: $(librohc_compressor_module_la_OBJECTS) $(librohc_compressor_module_la_DEPENDENCIES) $(EXTRA_librohc_compressor_module_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(librohc_compressor_module_la_LINK)  $(librohc_compressor_module_la_OBJECTS) $(librohc_compressor_module_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -426,7 +429,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librohc_decompressor_module_la-rohc_decompressor_module.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librohc_compressor_module_la-rohc_compressor_module.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librohc_compressor_module_la-rohc_decompressor_module.Plo@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -449,12 +453,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
-librohc_decompressor_module_la-rohc_decompressor_module.lo: rohc_decompressor_module.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_decompressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_decompressor_module_la_CXXFLAGS) $(CXXFLAGS) -MT librohc_decompressor_module_la-rohc_decompressor_module.lo -MD -MP -MF $(DEPDIR)/librohc_decompressor_module_la-rohc_decompressor_module.Tpo -c -o librohc_decompressor_module_la-rohc_decompressor_module.lo `test -f 'rohc_decompressor_module.cpp' || echo '$(srcdir)/'`rohc_decompressor_module.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/librohc_decompressor_module_la-rohc_decompressor_module.Tpo $(DEPDIR)/librohc_decompressor_module_la-rohc_decompressor_module.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rohc_decompressor_module.cpp' object='librohc_decompressor_module_la-rohc_decompressor_module.lo' libtool=yes @AMDEPBACKSLASH@
+librohc_compressor_module_la-rohc_compressor_module.lo: rohc_compressor_module.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_compressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_compressor_module_la_CXXFLAGS) $(CXXFLAGS) -MT librohc_compressor_module_la-rohc_compressor_module.lo -MD -MP -MF $(DEPDIR)/librohc_compressor_module_la-rohc_compressor_module.Tpo -c -o librohc_compressor_module_la-rohc_compressor_module.lo `test -f 'rohc_compressor_module.cpp' || echo '$(srcdir)/'`rohc_compressor_module.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/librohc_compressor_module_la-rohc_compressor_module.Tpo $(DEPDIR)/librohc_compressor_module_la-rohc_compressor_module.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rohc_compressor_module.cpp' object='librohc_compressor_module_la-rohc_compressor_module.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_decompressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_decompressor_module_la_CXXFLAGS) $(CXXFLAGS) -c -o librohc_decompressor_module_la-rohc_decompressor_module.lo `test -f 'rohc_decompressor_module.cpp' || echo '$(srcdir)/'`rohc_decompressor_module.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_compressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_compressor_module_la_CXXFLAGS) $(CXXFLAGS) -c -o librohc_compressor_module_la-rohc_compressor_module.lo `test -f 'rohc_compressor_module.cpp' || echo '$(srcdir)/'`rohc_compressor_module.cpp
+
+librohc_compressor_module_la-rohc_decompressor_module.lo: rohc_decompressor_module.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_compressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_compressor_module_la_CXXFLAGS) $(CXXFLAGS) -MT librohc_compressor_module_la-rohc_decompressor_module.lo -MD -MP -MF $(DEPDIR)/librohc_compressor_module_la-rohc_decompressor_module.Tpo -c -o librohc_compressor_module_la-rohc_decompressor_module.lo `test -f 'rohc_decompressor_module.cpp' || echo '$(srcdir)/'`rohc_decompressor_module.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/librohc_compressor_module_la-rohc_decompressor_module.Tpo $(DEPDIR)/librohc_compressor_module_la-rohc_decompressor_module.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='rohc_decompressor_module.cpp' object='librohc_compressor_module_la-rohc_decompressor_module.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(librohc_compressor_module_la_CPPFLAGS) $(CPPFLAGS) $(librohc_compressor_module_la_CXXFLAGS) $(CXXFLAGS) -c -o librohc_compressor_module_la-rohc_decompressor_module.lo `test -f 'rohc_decompressor_module.cpp' || echo '$(srcdir)/'`rohc_decompressor_module.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
