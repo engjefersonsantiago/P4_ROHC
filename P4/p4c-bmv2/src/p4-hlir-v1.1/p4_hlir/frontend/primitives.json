@@ -135,6 +135,25 @@
 	    }
 	}
     },
+    "rohc_comp_header" :
+    {
+	"num_args" : 3,
+	"args" : ["compressed_header", "umcompressed_header", "payload_size"],
+	"properties" : {
+	    "compressed_header" : {
+		"type" : "any_header",
+		"access" : "read"
+	    },
+	    "umcompressed_header" : {
+		"type" : "any_header",
+		"access" : "read"
+	    },
+	    "payload_size" : {
+		"type" : "int",
+		"access" : "read"
+	    }
+	}
+    },
     "recirculate" :
     {
 	"num_args" : 1,

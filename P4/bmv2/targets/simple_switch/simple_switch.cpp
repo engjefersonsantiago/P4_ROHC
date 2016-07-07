@@ -371,7 +371,7 @@ SimpleSwitch::ingress_thread() {
         BMLOG_DEBUG_PKT(*packet, "Resubmitting packet");
         // get the packet ready for being parsed again at the beginning of
         // ingress
-	packet->restore_buffer_state(packet_in_state);
+	      packet->restore_buffer_state(packet_in_state);
         p4object_id_t field_list_id = f_resubmit.get_int();
         f_resubmit.set(0);
         // TODO(antonin): a copy is not needed here, but I don't yet have an
@@ -500,6 +500,8 @@ SimpleSwitch::egress_thread(size_t worker_id) {
         }
         phv_copy->get_field("standard_metadata.instance_type")
             .set(PKT_INSTANCE_TYPE_RECIRC);
+        phv_copy->get_field("standard_metadata.packet_length")
+            .set(packet_copy->get_data_size());
         input_buffer.push_front(std::move(packet_copy));
         continue;
       }

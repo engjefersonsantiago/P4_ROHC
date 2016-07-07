@@ -24,6 +24,44 @@ header_type ethernet_t {
     }
 }
 
+// Field are multiple of byte to easy the data manipulation
+// IP header
+header_type ipv4_t {
+    fields {
+        bit<8>  version_ihl;      // [7..4] version, [3..0] ihl
+        bit<8>  diffserv;
+        bit<16> totalLen;
+        bit<16> identification;
+        bit<16> flags_fragOffset; // [15..13] flags, fragOffset [12..0]
+        bit<8>  ttl;
+        bit<8>  protocol;
+        bit<16> hdrChecksum;
+        bit<32> srcAddr;
+        bit<32> dstAddr;
+    }
+}
+
+// UDP header
+header_type udp_t {
+	  fields {
+	  	  bit<16> srcPort;
+	  	  bit<16> dstPort;
+	  	  bit<16> hdrLength;
+	  	  bit<16> chksum;
+    }
+}
+
+// RTP header
+header_type rtp_t {
+	  fields {
+		    bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+		    bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
+		    bit<16>     sequenceNumber;
+		    bit<32>     timestamp;
+		    bit<32>     SSRC;
+    }
+}
+
 header_type ip_umcomp_header_t {
     fields {
         bit<160> all_fields;
@@ -42,19 +80,45 @@ header_type rtp_umcomp_header_t {
       }
 }
 
+// IP header
+header_type rtp_all_headers_t {
+    fields {
+        bit<8>  version_ihl;      // [7..4] version, [3..0] ihl
+        bit<8>  diffserv;
+        bit<16> totalLen;
+        bit<16> identification;
+        bit<16> flags_fragOffset; // [15..13] flags, fragOffset [12..0]
+        bit<8>  ttl;
+        bit<8>  protocol;
+        bit<16> hdrChecksum;
+        bit<32> srcAddr;
+        bit<32> dstAddr;
+ 	  	  bit<16> srcPort;
+	  	  bit<16> dstPort;
+	  	  bit<16> hdrLength;
+	  	  bit<16> chksum;
+		    bit<8>  version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+		    bit<8>  marker_payloadType;    // [7] marker, [6..0] payloadType
+		    bit<16> sequenceNumber;
+		    bit<32> timestamp;
+		    bit<32> SSRC;
+    }
+}
+
+
 header_type intrinsic_metadata_t {
     fields {
-        bit<4> mcast_grp;
-        bit<4> egress_rid;
-        bit<16> mcast_hash;
-        bit<32> lf_field_list;
-        bit<16> recirculate_flag;
+        bit<4>    mcast_grp;
+        bit<4>    egress_rid;
+        bit<16>   mcast_hash;
+        bit<32>   lf_field_list;
+        bit<16>   recirculate_flag;
     }
 }
 
 header_type comp_header_t {
     fields {
-        bit<8> id_len;	// 2:id, 6: length
+        bit<8>      id_len;	// 2:id, 6: length
         varbit<504> all_fields;
     }
     length : (id_len&0x3f)+1;
@@ -62,7 +126,7 @@ header_type comp_header_t {
 
 header_type rohc_meta_t {
     fields {
-        bit<8> decompressed_flag;
+        bit<1>  decompressed_flag;
     }
 }
 
@@ -73,13 +137,19 @@ header_type packet_options_t {
 }
 
 header ethernet_t ethernet;
+header ipv4_t ipv4;
+header udp_t udp;
+header rtp_t rtp;
 header comp_header_t comp_header;
 header ip_umcomp_header_t ip_umcomp_header;
+header udp_umcomp_header_t udp_umcomp_header;
 header rtp_umcomp_header_t rtp_umcomp_header;
 
 metadata intrinsic_metadata_t intrinsic_metadata;
 metadata rohc_meta_t rohc_meta;
 metadata packet_options_t packet_options;
+metadata rtp_all_headers_t rtp_all_headers_meta;
+
 
 parser start {
     return parse_ethernet;
@@ -89,21 +159,46 @@ parser parse_ethernet {
     extract(ethernet);
     set_metadata(packet_options.payload_size, standard_metadata.packet_length - HEADER_SIZE_ETHERNET);
     return select(ethernet.etherType) {
+        0x0800    : parse_ipv4;
         0xDD00    : parse_comp;
         0x7777    : parse_umcomp;
         default   : ingress;
     }
 }
 
+parser parse_ipv4 {
+    extract(ipv4);
+    return select(ipv4.protocol){
+        0x11      : parse_udp; 
+        default   : ingress;  
+    }
+}
+
+parser parse_udp {
+    extract(udp);
+    return select(udp.dstPort){
+        1234      : parse_rtp; 
+        1235      : parse_rtp; 
+        5004      : parse_rtp; 
+        5005      : parse_rtp; 
+        default   : ingress;  
+    }
+}
+
+parser parse_rtp {
+    extract(rtp);
+    return ingress;  
+}
+
 parser parse_comp {
-   extract(comp_header);
-   return ingress;  
+    extract(comp_header);
+    return ingress;  
 }
 
 parser parse_umcomp {
-   extract(ip_umcomp_header);
-   extract(rtp_umcomp_header);
-   return ingress;  
+    extract(ip_umcomp_header);
+    extract(rtp_umcomp_header);
+    return ingress;  
 }
 
 action _drop() {
@@ -115,6 +210,7 @@ action _nop() {
 
 action set_port(in bit<9> port) {
    modify_field(standard_metadata.egress_spec, port);
+    modify_field(rohc_meta.decompressed_flag, 0);
 }
 
 field_list recirculate_FL {
@@ -127,12 +223,17 @@ action _decompress_ip() {
     modify_field(ethernet.etherType, 0x0800);
 }
 
+action _decompress_udp() {
+    rohc_decomp_header(comp_header, udp_umcomp_header, packet_options.payload_size);    
+    modify_field(rohc_meta.decompressed_flag, 1);
+    modify_field(ethernet.etherType, 0x0800);
+}
+
 action _decompress_rtp() {
     rohc_decomp_header(comp_header, rtp_umcomp_header, packet_options.payload_size);    
     modify_field(rohc_meta.decompressed_flag, 1);
     modify_field(ethernet.etherType, 0x0800);
 }
-
 
 table t_ingress_1 {
     reads {
@@ -141,7 +242,7 @@ table t_ingress_1 {
     actions {
         _nop; set_port;
     }
-    size : 128;
+    size : 2;
 }
 
 table t_ingress_ip {
@@ -151,7 +252,17 @@ table t_ingress_ip {
     actions {
         _nop; _decompress_ip;
     }
-    size : 128;
+    size : 2;
+}
+
+table t_ingress_udp {
+    reads {
+        rohc_meta.decompressed_flag : exact;
+    }
+    actions {
+        _nop; _decompress_udp;
+    }
+    size : 2;
 }
 
 table t_ingress_rtp {
@@ -161,7 +272,7 @@ table t_ingress_rtp {
     actions {
         _nop; _decompress_rtp;
     }
-    size : 128;
+    size : 2;
 }
 
 action _recirculate() {
@@ -175,14 +286,82 @@ table t_recirc {
     actions {
         _nop; _recirculate;
     }
-    size: 128;
- }
+    size: 2;
+}
 
+field_list ipv4_checksum_list {
+    ipv4.version_ihl;
+    ipv4.diffserv;
+    ipv4.totalLen;
+    ipv4.identification;
+    ipv4.flags_fragOffset;
+    ipv4.ttl;
+    ipv4.protocol;
+    ipv4.srcAddr;
+    ipv4.dstAddr;
+}
+
+field_list_calculation ipv4_checksum {
+    input {
+        ipv4_checksum_list;
+    }
+    algorithm     : csum16;
+    output_width  : 16;
+}
+
+//calculated_field ipv4.hdrChecksum  {
+//    update ipv4_checksum;
+//}
+
+action _compress () {
+    modify_field(rtp_all_headers_meta.version_ihl           , ipv4.version_ihl);
+    modify_field(rtp_all_headers_meta.diffserv              , ipv4.diffserv);
+    modify_field(rtp_all_headers_meta.totalLen              , ipv4.totalLen);
+    modify_field(rtp_all_headers_meta.identification        , ipv4.identification);
+    modify_field(rtp_all_headers_meta.flags_fragOffset      , ipv4.flags_fragOffset);
+    modify_field(rtp_all_headers_meta.ttl                   , ipv4.ttl);
+    modify_field(rtp_all_headers_meta.protocol              , ipv4.protocol);
+    modify_field(rtp_all_headers_meta.hdrChecksum           , ipv4.hdrChecksum);
+    modify_field(rtp_all_headers_meta.srcAddr               , ipv4.srcAddr);
+    modify_field(rtp_all_headers_meta.dstAddr               , ipv4.dstAddr);
+ 	  modify_field(rtp_all_headers_meta.srcPort               , udp.srcPort);
+	  modify_field(rtp_all_headers_meta.dstPort               , udp.dstPort);
+	  modify_field(rtp_all_headers_meta.hdrLength             , udp.hdrLength);
+	  modify_field(rtp_all_headers_meta.chksum                , udp.chksum);
+		modify_field(rtp_all_headers_meta.version_pad_ext_nCRSC , rtp.version_pad_ext_nCRSC);
+		modify_field(rtp_all_headers_meta.marker_payloadType    , rtp.marker_payloadType);
+		modify_field(rtp_all_headers_meta.sequenceNumber        , rtp.sequenceNumber);
+		modify_field(rtp_all_headers_meta.timestamp             , rtp.timestamp);
+		modify_field(rtp_all_headers_meta.SSRC                  , rtp.SSRC);
+    add_header(rtp_umcomp_header);
+    rohc_comp_header(rtp_umcomp_header, rtp_all_headers_meta, packet_options.payload_size);   
+    remove_header(rtp_umcomp_header);
+}
+
+//table t_compress {
+//    actions { _compress; }
+//    size : 0;
+//}
+
+table t_compress {
+   reads {
+        rohc_meta.decompressed_flag : exact;
+    }
+    actions { 
+        _nop; _compress;
+    }
+    size : 1;
+}
+
+ 
 control ingress {
     apply(t_ingress_1);
     if (valid(comp_header)) {
         if (comp_header.id_len>>6 == 3) {
             apply(t_ingress_ip);
+        }
+        if (comp_header.id_len>>6 == 1) {
+            apply(t_ingress_udp);
         }
         if (comp_header.id_len>>6 == 0) {
             apply(t_ingress_rtp);
@@ -191,7 +370,9 @@ control ingress {
 }
 
 control egress {
-    if (valid(rtp_umcomp_header) or valid(ip_umcomp_header)) {
+    if (valid(rtp_umcomp_header) or valid(ip_umcomp_header)
+        or valid(udp_umcomp_header)) {
         apply(t_recirc);
     }
+    apply(t_compress);
 }

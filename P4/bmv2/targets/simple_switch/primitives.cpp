@@ -300,6 +300,79 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
 
 REGISTER_PRIMITIVE(rohc_decomp_header);
 
+class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
+  // compressed_header: reference to the compressed header
+  // umcompressed_header: reference to a ordered list of the umcompressed headers
+  void operator ()(Header &compressed_header, Header &umcompressed_header, Data &packet_size) {
+    if (!compressed_header.is_valid()) {
+      compressed_header.mark_valid();
+      return;
+    }
+
+    //printf("Debug 1:\n");
+    size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
+    size_t payload_size = packet_size.get_uint() - umcomp_header_size; 
+    size_t comp_header_size = compressed_header.get_nbytes_packet();
+    //printf("Debug 2:\n");
+    
+    //printf("N Bytes: %d\n", (int)umcomp_header_size );
+    //printf("N Bytes payload: %d\n", (int)payload_size);
+    
+    unsigned char *comp_buff = new unsigned char [comp_header_size + payload_size];
+    unsigned char *umcomp_buff = new unsigned char [umcomp_header_size + payload_size];
+   // printf("Debug 3:\n");
+
+    //size_t comp_header_field_num = compressed_header.size();
+    size_t umcomp_header_field_num = umcompressed_header.size();
+    //printf("Debug 4:\n");
+    //printf("N Fields: %d\n", (int)umcomp_header_field_num );
+  
+    // Initialize the decompression data structures 
+    int index_comp_buff = 0;
+    for (size_t f = 0; f < umcomp_header_field_num; f++) {
+      //printf("Updating ptr:\n");
+      const char *c = umcompressed_header.get_field(f).get_bytes().data();
+      for (int i = 0; i < (int)umcompressed_header.get_field(f).get_bytes().size(); i++) {
+        umcomp_buff[index_comp_buff] = *c;
+        //printf("idx %d: 0x%.2x\n", index_comp_buff, (unsigned int)*c);
+        index_comp_buff++;
+        if (index_comp_buff == (int)umcomp_header_size) break;
+        c++;
+      }
+    }
+
+    printf("Umcompressed packet:\n");
+    for (size_t i = 0; i < umcomp_header_size; i++) printf("0x%.2x ", umcomp_buff[i]);
+    printf("\n");
+    
+    //// Perform the header decompression
+    rohc_c_ent.compress_header(comp_buff, umcomp_buff, &comp_header_size, (size_t)umcomp_header_size + payload_size);
+
+    printf("Compressed packet:\n");
+    comp_header_size-=payload_size;
+    printf("N Bytes: %d\n", (int)comp_header_size);
+    for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
+    printf("\n");
+
+
+    //// Modifiy the fields in the new umpressed header
+    //for (size_t f = 0; f < umcomp_header_field_num; f++) {
+    //   int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
+    //   umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
+    //   umcomp_buff+=field_size; 
+    //}
+
+    //// Removing the compressed header
+    //compressed_header.mark_invalid();
+
+    //// Mark umcompressed header as valid
+    //umcompressed_header.mark_valid();
+ 
+  }
+};
+
+REGISTER_PRIMITIVE(rohc_comp_header);
+
 class recirculate : public ActionPrimitive<const Data &> {
   void operator ()(const Data &field_list_id) {
     if (get_phv().has_field("intrinsic_metadata.recirculate_flag")) {

@@ -28,8 +28,6 @@
 #include <bm/bm_sim/event_logger.h>
 #include <bm/bm_sim/simple_pre_lag.h>
 
-#include </home/jef/Doctorate/Research/ROHC/examples/rohc_lib/rohc/examples/rohc_decompressor_module.h>
-
 #include <memory>
 #include <chrono>
 #include <thread>
@@ -64,8 +62,6 @@ using bm::Field;
 using bm::FieldList;
 using bm::packet_id_t;
 using bm::p4object_id_t;
-
-//using ROHC::RohcDecompressorEntity;
 
 class SimpleSwitch : public Switch {
  public:
