@@ -1,6 +1,11 @@
 # ROHC_P4
 Robust header compression draft with P4
 
+How to setup the environment? Place yourself in P4/p4c-bmv2/
+> sudo pip install -r requirements_v1_1.txt
+
+Ignore (i) and continue.
+
 How to compile?
 Place yourself in P4/bmv2
 If it is the first time run
