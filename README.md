@@ -12,7 +12,7 @@ If it is the first time run
 > sudo ./autogen.sh
 > sudo make clean
 > sudo ./autogen.sh
-> sudo make 
+> sudo make install
 Else run,
 > sudo ./autogen.sh
 > sudo make 
