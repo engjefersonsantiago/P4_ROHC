@@ -356,7 +356,7 @@ class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
     printf("DEBUG 2\n");
     printf("Umcompressed packet:\n");
     
-    void extract(const char *data, const PHV &phv);
+    //void extract(const char *data, const PHV &phv);
 
     printf("Num Bytes: %d\n", compressed_header.get_field(2).get_nbytes());
     compressed_header.get_field(2).set_bytes((const char*)comp_buff_sized, sizeof(comp_buff_sized));
