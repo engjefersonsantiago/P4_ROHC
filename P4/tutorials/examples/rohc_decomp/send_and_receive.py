@@ -49,8 +49,8 @@ def main():
 
     for ip_comp in ip_comps:
         Receiver().start()
-        
-        ip_comp = pack('b',(0<<6)+len(ip_comp)&0x3f) + ip_comp + RTP_PAYLOAD
+        prof_id = 0
+        ip_comp = pack('bb', prof_id, len(ip_comp)) + ip_comp + RTP_PAYLOAD
         p = Ether(src="aa:aa:aa:aa:aa:aa",type=0xdd00)/ip_comp
         print "Sending packet on port 0, listening on port 3"
         time.sleep(1)

@@ -313,7 +313,11 @@
             "id": 10,
             "fields": [
                 [
-                    "id_len",
+                    "id",
+                    8
+                ],
+                [
+                    "len",
                     8
                 ],
                 [
@@ -334,22 +338,12 @@
                                 "value": {
                                     "op": "+",
                                     "left": {
-                                        "type": "expression",
-                                        "value": {
-                                            "op": "&",
-                                            "left": {
-                                                "type": "local",
-                                                "value": 0
-                                            },
-                                            "right": {
-                                                "type": "hexstr",
-                                                "value": "0x3f"
-                                            }
-                                        }
+                                        "type": "local",
+                                        "value": 1
                                     },
                                     "right": {
                                         "type": "hexstr",
-                                        "value": "0x1"
+                                        "value": "0x2"
                                     }
                                 }
                             },
@@ -361,11 +355,11 @@
                     },
                     "right": {
                         "type": "hexstr",
-                        "value": "0x8"
+                        "value": "0x10"
                     }
                 }
             },
-            "max_length": 64
+            "max_length": 256
         },
         {
             "name": "rohc_meta_t",
@@ -376,8 +370,12 @@
                     1
                 ],
                 [
+                    "compressed_flag",
+                    1
+                ],
+                [
                     "_padding",
-                    7
+                    6
                 ]
             ],
             "length_exp": null,
@@ -434,44 +432,50 @@
             "metadata": false
         },
         {
-            "name": "ip_umcomp_header",
+            "name": "comp_header_resub",
             "id": 6,
+            "header_type": "comp_header_t",
+            "metadata": false
+        },
+        {
+            "name": "ip_umcomp_header",
+            "id": 7,
             "header_type": "ip_umcomp_header_t",
             "metadata": false
         },
         {
             "name": "udp_umcomp_header",
-            "id": 7,
+            "id": 8,
             "header_type": "udp_umcomp_header_t",
             "metadata": false
         },
         {
             "name": "rtp_umcomp_header",
-            "id": 8,
+            "id": 9,
             "header_type": "rtp_umcomp_header_t",
             "metadata": false
         },
         {
             "name": "intrinsic_metadata",
-            "id": 9,
+            "id": 10,
             "header_type": "intrinsic_metadata_t",
             "metadata": true
         },
         {
             "name": "rohc_meta",
-            "id": 10,
+            "id": 11,
             "header_type": "rohc_meta_t",
             "metadata": true
         },
         {
             "name": "packet_options",
-            "id": 11,
+            "id": 12,
             "header_type": "packet_options_t",
             "metadata": true
         },
         {
             "name": "rtp_all_headers_meta",
-            "id": 12,
+            "id": 13,
             "header_type": "rtp_all_headers_t",
             "metadata": true
         }
@@ -561,6 +565,11 @@
                             "value": "0xdd00",
                             "mask": null,
                             "next_state": "parse_comp"
+                        },
+                        {
+                            "value": "0xde00",
+                            "mask": null,
+                            "next_state": "parse_comp_resub"
                         },
                         {
                             "value": "0x7777",
@@ -708,8 +717,31 @@
                     ]
                 },
                 {
-                    "name": "parse_umcomp",
+                    "name": "parse_comp_resub",
                     "id": 6,
+                    "parser_ops": [
+                        {
+                            "op": "extract",
+                            "parameters": [
+                                {
+                                    "type": "regular",
+                                    "value": "comp_header_resub"
+                                }
+                            ]
+                        }
+                    ],
+                    "transition_key": [],
+                    "transitions": [
+                        {
+                            "value": "default",
+                            "mask": null,
+                            "next_state": null
+                        }
+                    ]
+                },
+                {
+                    "name": "parse_umcomp",
+                    "id": 7,
                     "parser_ops": [
                         {
                             "op": "extract",
@@ -748,10 +780,11 @@
             "id": 0,
             "order": [
                 "ethernet",
-                "ipv4",
                 "ip_umcomp_header",
+                "comp_header_resub",
                 "rtp_umcomp_header",
                 "comp_header",
+                "ipv4",
                 "udp",
                 "rtp"
             ]
@@ -760,8 +793,524 @@
     "meter_arrays": [],
     "actions": [
         {
-            "name": "_decompress_udp",
+            "name": "_compress",
             "id": 0,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "version_ihl"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "version_ihl"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "diffserv"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "diffserv"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "totalLen"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "totalLen"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "identification"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "identification"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "flags_fragOffset"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "flags_fragOffset"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "ttl"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "ttl"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "protocol"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "protocol"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "hdrChecksum"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "hdrChecksum"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "srcAddr"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "srcAddr"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "dstAddr"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "ipv4",
+                                "dstAddr"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "srcPort"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "udp",
+                                "srcPort"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "dstPort"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "udp",
+                                "dstPort"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "hdrLength"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "udp",
+                                "hdrLength"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "chksum"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "udp",
+                                "chksum"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "version_pad_ext_nCRSC"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp",
+                                "version_pad_ext_nCRSC"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "marker_payloadType"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp",
+                                "marker_payloadType"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "sequenceNumber"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp",
+                                "sequenceNumber"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "timestamp"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp",
+                                "timestamp"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp_all_headers_meta",
+                                "SSRC"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "rtp",
+                                "SSRC"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "rohc_comp_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "comp_header_resub"
+                        },
+                        {
+                            "type": "header",
+                            "value": "rtp_all_headers_meta"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "packet_options",
+                                "payload_size"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0xde00"
+                        }
+                    ]
+                },
+                {
+                    "op": "recirculate",
+                    "parameters": [
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "_decompress_ip",
+            "id": 1,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "rohc_decomp_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "comp_header"
+                        },
+                        {
+                            "type": "header",
+                            "value": "ip_umcomp_header"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "packet_options",
+                                "payload_size"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rohc_meta",
+                                "decompressed_flag"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x800"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "set_port",
+            "id": 2,
+            "runtime_data": [
+                {
+                    "name": "port",
+                    "bitwidth": 9
+                }
+            ],
+            "primitives": [
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "standard_metadata",
+                                "egress_spec"
+                            ]
+                        },
+                        {
+                            "type": "runtime_data",
+                            "value": 0
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rohc_meta",
+                                "decompressed_flag"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x0"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "_decompress_udp",
+            "id": 3,
             "runtime_data": [],
             "primitives": [
                 {
@@ -820,7 +1369,7 @@
         },
         {
             "name": "_recirculate",
-            "id": 1,
+            "id": 4,
             "runtime_data": [],
             "primitives": [
                 {
@@ -836,521 +1385,12 @@
         },
         {
             "name": "_nop",
-            "id": 2,
+            "id": 5,
             "runtime_data": [],
             "primitives": []
         },
         {
-            "name": "set_port",
-            "id": 3,
-            "runtime_data": [
-                {
-                    "name": "port",
-                    "bitwidth": 9
-                }
-            ],
-            "primitives": [
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "egress_spec"
-                            ]
-                        },
-                        {
-                            "type": "runtime_data",
-                            "value": 0
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rohc_meta",
-                                "decompressed_flag"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x0"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "_decompress_rtp",
-            "id": 4,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "rohc_decomp_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "comp_header"
-                        },
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "packet_options",
-                                "payload_size"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rohc_meta",
-                                "decompressed_flag"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "ethernet",
-                                "etherType"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x800"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "_compress",
-            "id": 5,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "version_ihl"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "version_ihl"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "diffserv"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "diffserv"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "totalLen"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "totalLen"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "identification"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "identification"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "flags_fragOffset"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "flags_fragOffset"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "ttl"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "ttl"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "protocol"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "protocol"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "hdrChecksum"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "hdrChecksum"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "srcAddr"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "srcAddr"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "dstAddr"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "ipv4",
-                                "dstAddr"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "srcPort"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "udp",
-                                "srcPort"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "dstPort"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "udp",
-                                "dstPort"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "hdrLength"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "udp",
-                                "hdrLength"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "chksum"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "udp",
-                                "chksum"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "version_pad_ext_nCRSC"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp",
-                                "version_pad_ext_nCRSC"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "marker_payloadType"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp",
-                                "marker_payloadType"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "sequenceNumber"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp",
-                                "sequenceNumber"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "timestamp"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp",
-                                "timestamp"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp_all_headers_meta",
-                                "SSRC"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "rtp",
-                                "SSRC"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "add_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                },
-                {
-                    "op": "rohc_comp_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        },
-                        {
-                            "type": "header",
-                            "value": "rtp_all_headers_meta"
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "packet_options",
-                                "payload_size"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "remove_header",
-                    "parameters": [
-                        {
-                            "type": "header",
-                            "value": "rtp_umcomp_header"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "_decompress_ip",
             "id": 6,
             "runtime_data": [],
             "primitives": [
@@ -1363,7 +1403,7 @@
                         },
                         {
                             "type": "header",
-                            "value": "ip_umcomp_header"
+                            "value": "rtp_umcomp_header"
                         },
                         {
                             "type": "field",
@@ -1558,21 +1598,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",
@@ -1591,21 +1621,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",
@@ -1624,21 +1644,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",
