@@ -354,6 +354,12 @@ class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
     for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
 
+	// Positionate the head of the buffer to put the compressed header inside the payload
+	char *payload_start = get_packet().prepend(comp_header_size);
+	std::strncpy(payload_start, (const char*) comp_buff, comp_header_size);
+	
+	printf("Debug 4:\n");
+    printf("%d\n", (int)comp_header_size );
 
     //// Modifiy the fields in the new umpressed header
     //for (size_t f = 0; f < umcomp_header_field_num; f++) {
@@ -366,7 +372,7 @@ class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
     //compressed_header.mark_invalid();
 
     //// Mark umcompressed header as valid
-    //umcompressed_header.mark_valid();
+    //umcompressed_header.mark_invalid();
  
   }
 };
