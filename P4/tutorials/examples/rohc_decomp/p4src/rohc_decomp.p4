@@ -116,12 +116,14 @@ header_type intrinsic_metadata_t {
     }
 }
 
+#define COMP_HEADER_LEN_MASK 0x3f
+
 header_type comp_header_t {
     fields {
         bit<8>      id_len;	// 2:id, 6: length
         varbit<504> all_fields;
     }
-    length : (id_len&0x3f)+1;
+    length : (id_len&COMP_HEADER_LEN_MASK)+1;
  }
 
 header_type rohc_meta_t {
@@ -336,6 +338,9 @@ action _compress () {
     add_header(rtp_umcomp_header);
     rohc_comp_header(rtp_umcomp_header, rtp_all_headers_meta, packet_options.payload_size);   
     remove_header(rtp_umcomp_header);
+	remove_header(rtp);
+	remove_header(ipv4);
+	remove_header(udp);
 }
 
 //table t_compress {

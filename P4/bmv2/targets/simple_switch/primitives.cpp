@@ -19,6 +19,7 @@
  */
 
 #include <bm/bm_sim/actions.h>
+#include <bm/bm_sim/bytecontainer.h>
 #include "../../ROHC/export/rohc_decompressor_module.h"
 #include "../../ROHC/export/rohc_compressor_module.h"
 
@@ -27,6 +28,7 @@
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
+using bm::ByteContainer;
 using bm::Data;
 using bm::Field;
 using bm::Header;
@@ -300,6 +302,8 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
 
 REGISTER_PRIMITIVE(rohc_decomp_header);
 
+#define COMP_HEADER_T_SIZE 2
+
 class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
   // compressed_header: reference to the compressed header
   // umcompressed_header: reference to a ordered list of the umcompressed headers
@@ -352,11 +356,21 @@ class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
     comp_header_size-=payload_size;
     printf("N Bytes: %d\n", (int)comp_header_size);
     for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
-    printf("\n");
+    printf("\nDebug %u", (unsigned int)comp_header_size);
 
 	// Positionate the head of the buffer to put the compressed header inside the payload
 	char *payload_start = get_packet().prepend(comp_header_size);
-	std::strncpy(payload_start, (const char*) comp_buff, comp_header_size);
+	for (int i = 0; i < (int) comp_header_size;i++)
+		payload_start[i] = comp_buff[i];	
+
+	// Add the uncompressed header
+	payload_start = get_packet().prepend(COMP_HEADER_T_SIZE);
+	payload_start[0] = 0;
+	payload_start[1] = comp_header_size;
+
+	//ByteContainer bytes((const char*) comp_buff, comp_header_size);
+    //std::copy(bytes.begin(), --bytes.end(), payload_start);
+	//std::memcpy(payload_start, (const char*) comp_buff, comp_header_size);
 	
 	printf("Debug 4:\n");
     printf("%d\n", (int)comp_header_size );
