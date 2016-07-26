@@ -748,10 +748,10 @@
             "id": 0,
             "order": [
                 "ethernet",
-                "ipv4",
                 "ip_umcomp_header",
                 "rtp_umcomp_header",
                 "comp_header",
+                "ipv4",
                 "udp",
                 "rtp"
             ]
@@ -760,8 +760,67 @@
     "meter_arrays": [],
     "actions": [
         {
-            "name": "_decompress_udp",
+            "name": "_decompress_ip",
             "id": 0,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "rohc_decomp_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "comp_header"
+                        },
+                        {
+                            "type": "header",
+                            "value": "ip_umcomp_header"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "packet_options",
+                                "payload_size"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rohc_meta",
+                                "decompressed_flag"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x800"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "_decompress_udp",
+            "id": 1,
             "runtime_data": [],
             "primitives": [
                 {
@@ -819,30 +878,8 @@
             ]
         },
         {
-            "name": "_recirculate",
-            "id": 1,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "recirculate",
-                    "parameters": [
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "_nop",
-            "id": 2,
-            "runtime_data": [],
-            "primitives": []
-        },
-        {
             "name": "set_port",
-            "id": 3,
+            "id": 2,
             "runtime_data": [
                 {
                     "name": "port",
@@ -885,8 +922,30 @@
             ]
         },
         {
-            "name": "_decompress_rtp",
+            "name": "_recirculate",
+            "id": 3,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "recirculate",
+                    "parameters": [
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "_nop",
             "id": 4,
+            "runtime_data": [],
+            "primitives": []
+        },
+        {
+            "name": "_decompress_rtp",
+            "id": 5,
             "runtime_data": [],
             "primitives": [
                 {
@@ -945,7 +1004,7 @@
         },
         {
             "name": "_compress",
-            "id": 5,
+            "id": 6,
             "runtime_data": [],
             "primitives": [
                 {
@@ -1346,63 +1405,31 @@
                             "value": "rtp_umcomp_header"
                         }
                     ]
-                }
-            ]
-        },
-        {
-            "name": "_decompress_ip",
-            "id": 6,
-            "runtime_data": [],
-            "primitives": [
+                },
                 {
-                    "op": "rohc_decomp_header",
+                    "op": "remove_header",
                     "parameters": [
                         {
                             "type": "header",
-                            "value": "comp_header"
-                        },
-                        {
-                            "type": "header",
-                            "value": "ip_umcomp_header"
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "packet_options",
-                                "payload_size"
-                            ]
+                            "value": "rtp"
                         }
                     ]
                 },
                 {
-                    "op": "modify_field",
+                    "op": "remove_header",
                     "parameters": [
                         {
-                            "type": "field",
-                            "value": [
-                                "rohc_meta",
-                                "decompressed_flag"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
+                            "type": "header",
+                            "value": "ipv4"
                         }
                     ]
                 },
                 {
-                    "op": "modify_field",
+                    "op": "remove_header",
                     "parameters": [
                         {
-                            "type": "field",
-                            "value": [
-                                "ethernet",
-                                "etherType"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x800"
+                            "type": "header",
+                            "value": "udp"
                         }
                     ]
                 }

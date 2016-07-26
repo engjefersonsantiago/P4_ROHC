@@ -9,7 +9,8 @@ exportdir = $(docdir)/export
 noinst_LTLIBRARIES = librohc_compressor_module.la
 
 librohc_compressor_module_la_CXXFLAGS = \
-	$(configure_cflags) 
+	$(configure_cflags) \
+  -std=c++11  
 librohc_compressor_module_la_CPPFLAGS = \
 	-I$(top_srcdir)/src/common \
 	-I$(top_srcdir)/src/comp \

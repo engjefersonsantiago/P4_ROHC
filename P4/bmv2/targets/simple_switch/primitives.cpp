@@ -41,8 +41,8 @@ using bm::HeaderStack;
 using ROHC::RohcDecompressorEntity;
 using ROHC::RohcCompressorEntity;
 
-RohcDecompressorEntity rohc_d_ent;
-RohcCompressorEntity rohc_c_ent;
+RohcDecompressorEntity rohc_d_ent(true);
+RohcCompressorEntity rohc_c_ent(true);
 
 class modify_field : public ActionPrimitive<Data &, const Data &> {
   void operator ()(Data &dst, const Data &src) {
@@ -506,7 +506,5 @@ REGISTER_PRIMITIVE_W_NAME("truncate", truncate_);
 // primitives could also be placed in simple_switch.cpp directly), but I need
 // this dummy function if I want to keep the primitives in their own file
 int import_primitives() {
-  rohc_c_ent.compress_init(true);
-  rohc_d_ent.decompress_init(false);
   return 0;
 }
