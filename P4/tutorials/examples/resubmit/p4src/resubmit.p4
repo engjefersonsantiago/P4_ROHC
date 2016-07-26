@@ -22,18 +22,6 @@ header_type ethernet_t {
     }
 }
 
-header_type ip_umcomp_header_t {
-    fields {
-        bit<160> all_fields;
-      }
-}
-
-header_type rtp_umcomp_header_t {
-    fields {
-        bit<320> all_fields;
-      }
-}
-
 header_type intrinsic_metadata_t {
     fields {
         bit<4> mcast_grp;
@@ -41,18 +29,9 @@ header_type intrinsic_metadata_t {
         bit<16> mcast_hash;
         bit<32> lf_field_list;
         bit<16> resubmit_flag;
-        bit<16> modify_and_resubmit_flag;
         bit<16> recirculate_flag;
     }
 }
-
-header_type comp_header_t {
-    fields {
-        bit<8> id_len;	// 2:id, 6: length
-        varbit<504> all_fields;
-    }
-    length : (id_len&0x3f)+1;
- }
 
 header_type mymeta_t {
     fields {
@@ -67,9 +46,7 @@ header_type packet_options_t {
 }
 
 header ethernet_t ethernet;
-header comp_header_t comp_header;
-header ip_umcomp_header_t ip_umcomp_header;
-header rtp_umcomp_header_t rtp_umcomp_header;
+
 
 metadata intrinsic_metadata_t intrinsic_metadata;
 metadata mymeta_t mymeta;
@@ -81,23 +58,8 @@ parser start {
 
 parser parse_ethernet {
     extract(ethernet);
-
-    return select(ethernet.etherType) {
-        0xDD00 mask 0xff00 : parse_comp;
-        0x7777             : parse_umcomp;
-        default            : ingress;
-    }
-}
-
-parser parse_comp {
-   extract(comp_header);
-   return ingress;  
-}
-
-parser parse_umcomp {
-   extract(ip_umcomp_header);
-   extract(rtp_umcomp_header);
-   return ingress;  
+    set_metadata(packet_options.payload_size, standard_metadata.packet_length);
+    return ingress;
 }
 
 action _drop() {
@@ -116,29 +78,6 @@ field_list resubmit_FL {
     mymeta.f1;
 }
 
-action _resubmit_ip() {
-    add_header(ip_umcomp_header);
-    //rohc_decomp_header(comp_header, ip_umcomp_header);    
-    rohc_decomp_header(comp_header, ip_umcomp_header, standard_metadata.packet_length);    
-    add_header(ip_umcomp_header);
-    remove_header(comp_header);   
-    modify_field(mymeta.f1, 1);
-    //recirculate(resubmit_FL);
-    //modify_and_resubmit(resubmit_FL);
-}
-
-action _resubmit_rtp() {
-    add_header(rtp_umcomp_header);
-    //rohc_decomp_header(comp_header, rtp_umcomp_header);    
-    rohc_decomp_header(comp_header, rtp_umcomp_header, standard_metadata.packet_length);    
-    add_header(rtp_umcomp_header);
-    remove_header(comp_header);   
-    modify_field(mymeta.f1, 1);
-    //recirculate(resubmit_FL2);
-    //modify_and_resubmit(resubmit_FL2);
-}
-
-
 table t_ingress_1 {
     reads {
         mymeta.f1 : exact;
@@ -149,28 +88,8 @@ table t_ingress_1 {
     size : 128;
 }
 
-table t_ingress_ip {
-    reads {
-        mymeta.f1 : exact;
-    }
-    actions {
-        _nop; _resubmit_ip;
-    }
-    size : 128;
-}
-
-table t_ingress_rtp {
-    reads {
-        mymeta.f1 : exact;
-    }
-    actions {
-        _nop; _resubmit_rtp;
-    }
-    size : 128;
-}
-
 action _recirculate() {
-    //modify_field(mymeta.f1, 0);
+    modify_field(mymeta.f1, 1);
     recirculate(resubmit_FL);
 }
 
@@ -187,18 +106,8 @@ table t_recirc {
 
 control ingress {
     apply(t_ingress_1);
-    if (valid(comp_header)) {
-        if (comp_header.id_len>>6 == 3) {
-            apply(t_ingress_ip);
-        }
-        if (comp_header.id_len>>6 == 0) {
-            apply(t_ingress_rtp);
-        }
-    }
 }
 
 control egress {
-    if (valid(rtp_umcomp_header) or valid(ip_umcomp_header)) {
-        apply(t_recirc);
-    }
+    apply(t_recirc);
 }

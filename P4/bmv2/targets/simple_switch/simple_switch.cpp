@@ -501,7 +501,7 @@ SimpleSwitch::egress_thread(size_t worker_id) {
         phv_copy->get_field("standard_metadata.instance_type")
             .set(PKT_INSTANCE_TYPE_RECIRC);
         phv_copy->get_field("standard_metadata.packet_length")
-            .set(packet_copy->get_data_size());
+           .set(packet_copy->get_data_size());
         input_buffer.push_front(std::move(packet_copy));
         continue;
       }
