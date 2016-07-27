@@ -248,10 +248,6 @@ SimpleSwitch::copy_ingress_pkt(
     const std::unique_ptr<Packet> &packet,
     PktInstanceType copy_type, p4object_id_t field_list_id) {
 
-  // begin modification  
-  //std::unique_ptr<Packet> packet_copy = packet->clone_with_phv_ptr();
-  // end modification
-
   std::unique_ptr<Packet> packet_copy = packet->clone_no_phv_ptr();
   
   PHV *phv_copy = packet_copy->get_phv();

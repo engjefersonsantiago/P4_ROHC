@@ -119,7 +119,7 @@
     "rohc_decomp_header" :
     {
 	"num_args" : 3,
-	"args" : ["compressed_header", "umcompressed_header", "payload_size"],
+	"args" : ["compressed_header", "payload_size"],
 	"properties" : {
 	    "compressed_header" : {
 		"type" : "any_header",
@@ -137,8 +137,8 @@
     },
     "rohc_comp_header" :
     {
-	"num_args" : 3,
-	"args" : ["compressed_header", "umcompressed_header", "payload_size"],
+	"num_args" : 2,
+	"args" : ["umcompressed_header", "payload_size"],
 	"properties" : {
 	    "compressed_header" : {
 		"type" : "any_header",

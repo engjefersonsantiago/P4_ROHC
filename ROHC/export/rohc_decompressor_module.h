@@ -63,7 +63,7 @@ class RohcDecompressorEntity {
 		int decompress_header(unsigned char *compressed_header_buffer,
                           unsigned char *umcompressed_header_buffer,
 								          size_t comp_header_size,
-                          size_t umcomp_header_size);
+                          size_t* umcomp_header_size);
 
 		virtual ~RohcDecompressorEntity();
 

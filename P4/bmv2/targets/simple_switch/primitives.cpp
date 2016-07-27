@@ -19,7 +19,7 @@
  */
 
 #include <bm/bm_sim/actions.h>
-#include <bm/bm_sim/bytecontainer.h>
+#include <bm/bm_sim/packet_buffer.h>
 #include "../../ROHC/export/rohc_decompressor_module.h"
 #include "../../ROHC/export/rohc_compressor_module.h"
 
@@ -28,7 +28,8 @@
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
-using bm::ByteContainer;
+using bm::PacketBuffer;
+using bm::PHV;
 using bm::Data;
 using bm::Field;
 using bm::Header;
@@ -250,32 +251,29 @@ class resubmit : public ActionPrimitive<const Data &> {
 
 REGISTER_PRIMITIVE(resubmit);
 
+#define EXTRA_LENGHT_UNCOMP 80
+
 // compressed_header: reference to the compressed header
-// umcompressed_header: reference to the umcompressed header
+// uncompressed_header: reference to the uncompressed header
 // packet_size: reference to the payload size
-class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
- void operator ()(Header &compressed_header, Header &umcompressed_header, Data &packet_size) {
+class rohc_decomp_header : public ActionPrimitive< Header &, Data &> {
+ void operator ()(Header &compressed_header, Data &packet_size) {
     if (!compressed_header.is_valid()) {
-      umcompressed_header.mark_invalid();
       return;
     }
 
     size_t payload_size = packet_size.get_uint() - compressed_header.get_nbytes_packet(); 
     size_t comp_header_size = compressed_header.get_nbytes_packet()
                               - compressed_header.get_field(0).get_bytes().size()   // ID
-                              - compressed_header.get_field(1).get_bytes().size();  // Size
-    size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
-    
+                              - compressed_header.get_field(1).get_bytes().size();  // Len
+    size_t uncomp_header_size = 0;
     unsigned char *comp_buff = new unsigned char [comp_header_size + payload_size];
-    unsigned char *umcomp_buff = new unsigned char [umcomp_header_size + payload_size];
-
-    size_t comp_header_field_num = compressed_header.size();
-    size_t umcomp_header_field_num = umcompressed_header.size();
+    unsigned char *uncomp_buff = new unsigned char [comp_header_size + payload_size + EXTRA_LENGHT_UNCOMP];
   
     // Initialize the decompression data structures 
     int index_comp_buff = 0;
     // 2 byte offset cause the first byte has the profile and header size information
-    for (size_t f = 2; f < comp_header_field_num; f++) {
+    for (size_t f = 2; f < compressed_header.size(); f++) {
       const char *c = compressed_header.get_field(f).get_bytes().data();
       for (int i = 0; i < (int)compressed_header.get_field(f).get_bytes().size(); i++) {
          comp_buff[index_comp_buff] = *c;
@@ -285,20 +283,21 @@ class rohc_decomp_header : public ActionPrimitive<Header &, Header &, Data &> {
     }
 
     // Perform the header decompression
-    rohc_d_ent.decompress_header(comp_buff, umcomp_buff, (size_t)comp_header_size + payload_size, (size_t)umcomp_header_size + payload_size);
-
-    // Modifiy the fields in the new umpressed header
-    for (size_t f = 0; f < umcomp_header_field_num; f++) {
-       int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
-       umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
-       umcomp_buff+=field_size; 
-    }
+    rohc_d_ent.decompress_header(comp_buff, uncomp_buff, (size_t)comp_header_size + payload_size, &uncomp_header_size);
+		
+		uncomp_header_size -= payload_size;
+    //printf("Debugggggg %u", (unsigned int) *payload[0] );
+ 		printf("N Bytes: %d\n", (int) comp_header_size);
+    for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", uncomp_buff[i]);
+    printf("\n");
+		// Positionate the head of the buffer to put the uncompressed header inside the payload
+	  char *payload_start = get_packet().prepend(uncomp_header_size);
+	  for (int i = 0; i < (int) uncomp_header_size; i++)
+			payload_start[i] = uncomp_buff[i];	
+		printf("FINISHED DECOMPRESSION!!!!!!!!!!!!!!!!!");
 
     // Removing the compressed header
     compressed_header.mark_invalid();
-
-    // Mark umcompressed header as valid
-    umcompressed_header.mark_valid();
  
   }
 };
@@ -308,42 +307,44 @@ REGISTER_PRIMITIVE(rohc_decomp_header);
 #define COMP_HEADER_T_SIZE 2
 
 // compressed_header: reference to the compressed header
-// umcompressed_header: reference to the umcompressed header
+// uncompressed_header: reference to the uncompressed header
 // packet_size: reference to the payload size
-class rohc_comp_header : public ActionPrimitive<Header &, Header &, Data &> {
-void operator ()(Header &compressed_header, Header &umcompressed_header, Data &packet_size) {
+class rohc_comp_header : public ActionPrimitive<Header &, Data &> {
+void operator ()(Header &uncompressed_header, Data &packet_size) {
 
-    size_t umcomp_header_size = umcompressed_header.get_nbytes_packet();
-    size_t payload_size = packet_size.get_uint() - umcomp_header_size; 
-    size_t comp_header_size = compressed_header.get_nbytes_packet();
-  
-    unsigned char *comp_buff = new unsigned char [comp_header_size + payload_size];
-    unsigned char *umcomp_buff = new unsigned char [umcomp_header_size + payload_size];
+    size_t uncomp_header_size = uncompressed_header.get_nbytes_packet();
+    size_t payload_size = packet_size.get_uint() - uncomp_header_size; 
 
-    //size_t comp_header_field_num = compressed_header.size();
-    size_t umcomp_header_field_num = umcompressed_header.size();
+    //size_t comp_header_size = compressed_header.get_nbytes_packet();
+		//printf("Debug00 : %u", (unsigned int) comp_header_size);
+		size_t comp_header_size = 0;
+  	
+    unsigned char *comp_buff = new unsigned char [uncomp_header_size + payload_size + 2];
+    unsigned char *uncomp_buff = new unsigned char [uncomp_header_size + payload_size];
+
+    size_t uncomp_header_field_num = uncompressed_header.size();
   
     // Initialize the compression data structures 
     int index_comp_buff = 0;
-    for (size_t f = 0; f < umcomp_header_field_num; f++) {
-      const char *c = umcompressed_header.get_field(f).get_bytes().data();
-      for (int i = 0; i < (int)umcompressed_header.get_field(f).get_bytes().size(); i++) {
-        umcomp_buff[index_comp_buff] = *c;
+    for (size_t f = 0; f < uncomp_header_field_num; f++) {
+      const char *c = uncompressed_header.get_field(f).get_bytes().data();
+      for (int i = 0; i < (int)uncompressed_header.get_field(f).get_bytes().size(); i++) {
+        uncomp_buff[index_comp_buff] = *c;
         index_comp_buff++;
         c++;
       }
     }
 
-    printf("Umcompressed packet:\n");
-    for (size_t i = 0; i < umcomp_header_size; i++) printf("0x%.2x ", umcomp_buff[i]);
+    printf("Uncompressed packet:\n");
+    for (size_t i = 0; i < uncomp_header_size; i++) printf("0x%.2x ", uncomp_buff[i]);
     printf("\n");
     
     // Perform the header decompression
-    rohc_c_ent.compress_header(comp_buff, umcomp_buff, &comp_header_size, (size_t)umcomp_header_size + payload_size);
+    rohc_c_ent.compress_header(comp_buff, uncomp_buff, &comp_header_size, (size_t) uncomp_header_size + payload_size);
 
     printf("Compressed packet:\n");
-    comp_header_size-=payload_size;
-    printf("N Bytes: %d\n", (int)comp_header_size);
+    comp_header_size -= payload_size;
+    printf("N Bytes: %d\n", (int) comp_header_size);
     for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
 
@@ -356,27 +357,6 @@ void operator ()(Header &compressed_header, Header &umcompressed_header, Data &p
 	  payload_start = get_packet().prepend(COMP_HEADER_T_SIZE);
 	  payload_start[0] = 0;
 	  payload_start[1] = comp_header_size;
-
-	  //ByteContainer bytes((const char*) comp_buff, comp_header_size);
-    //std::copy(bytes.begin(), --bytes.end(), payload_start);
-	  //std::memcpy(payload_start, (const char*) comp_buff, comp_header_size);
-	  
-	  printf("Debug 4:\n");
-    printf("%d\n", (int)comp_header_size);
-
-    //// Modifiy the fields in the new umpressed header
-    //for (size_t f = 0; f < umcomp_header_field_num; f++) {
-    //   int field_size = (int)umcompressed_header.get_field(f).get_bytes().size();
-    //   umcompressed_header.get_field(f).set_bytes((const char*)umcomp_buff, field_size);
-    //   umcomp_buff+=field_size; 
-    //}
-
-    //// Removing the compressed header
-    //compressed_header.mark_invalid();
-
-    //// Mark umcompressed header as valid
-    //umcompressed_header.mark_invalid();
- 
   }
 };
 
