@@ -19,7 +19,6 @@
  */
 
 #include <bm/bm_sim/actions.h>
-#include <bm/bm_sim/packet_buffer.h>
 #include "../../ROHC/export/rohc_decompressor_module.h"
 #include "../../ROHC/export/rohc_compressor_module.h"
 
@@ -28,8 +27,6 @@
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
-using bm::PacketBuffer;
-using bm::PHV;
 using bm::Data;
 using bm::Field;
 using bm::Header;
@@ -251,6 +248,7 @@ class resubmit : public ActionPrimitive<const Data &> {
 
 REGISTER_PRIMITIVE(resubmit);
 
+// Used to define enough space to extract the compressed header to the uncomp_buffer
 #define EXTRA_LENGHT_UNCOMP 80
 
 // compressed_header: reference to the compressed header
@@ -286,7 +284,6 @@ class rohc_decomp_header : public ActionPrimitive< Header &, Data &> {
     rohc_d_ent.decompress_header(comp_buff, uncomp_buff, (size_t)comp_header_size + payload_size, &uncomp_header_size);
 		
 		uncomp_header_size -= payload_size;
-    //printf("Debugggggg %u", (unsigned int) *payload[0] );
  		printf("N Bytes: %d\n", (int) comp_header_size);
     for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", uncomp_buff[i]);
     printf("\n");
@@ -294,7 +291,6 @@ class rohc_decomp_header : public ActionPrimitive< Header &, Data &> {
 	  char *payload_start = get_packet().prepend(uncomp_header_size);
 	  for (int i = 0; i < (int) uncomp_header_size; i++)
 			payload_start[i] = uncomp_buff[i];	
-		printf("FINISHED DECOMPRESSION!!!!!!!!!!!!!!!!!");
 
     // Removing the compressed header
     compressed_header.mark_invalid();
@@ -314,9 +310,6 @@ void operator ()(Header &uncompressed_header, Data &packet_size) {
 
     size_t uncomp_header_size = uncompressed_header.get_nbytes_packet();
     size_t payload_size = packet_size.get_uint() - uncomp_header_size; 
-
-    //size_t comp_header_size = compressed_header.get_nbytes_packet();
-		//printf("Debug00 : %u", (unsigned int) comp_header_size);
 		size_t comp_header_size = 0;
   	
     unsigned char *comp_buff = new unsigned char [uncomp_header_size + payload_size + 2];
