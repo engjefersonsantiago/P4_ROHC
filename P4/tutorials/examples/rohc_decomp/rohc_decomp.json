@@ -313,7 +313,11 @@
             "id": 10,
             "fields": [
                 [
-                    "id_len",
+                    "id",
+                    8
+                ],
+                [
+                    "len",
                     8
                 ],
                 [
@@ -334,22 +338,12 @@
                                 "value": {
                                     "op": "+",
                                     "left": {
-                                        "type": "expression",
-                                        "value": {
-                                            "op": "&",
-                                            "left": {
-                                                "type": "local",
-                                                "value": 0
-                                            },
-                                            "right": {
-                                                "type": "hexstr",
-                                                "value": "0x3f"
-                                            }
-                                        }
+                                        "type": "local",
+                                        "value": 1
                                     },
                                     "right": {
                                         "type": "hexstr",
-                                        "value": "0x1"
+                                        "value": "0x2"
                                     }
                                 }
                             },
@@ -361,11 +355,11 @@
                     },
                     "right": {
                         "type": "hexstr",
-                        "value": "0x8"
+                        "value": "0x10"
                     }
                 }
             },
-            "max_length": 64
+            "max_length": 256
         },
         {
             "name": "rohc_meta_t",
@@ -376,8 +370,12 @@
                     1
                 ],
                 [
+                    "compressed_flag",
+                    1
+                ],
+                [
                     "_padding",
-                    7
+                    6
                 ]
             ],
             "length_exp": null,
@@ -841,52 +839,8 @@
             "primitives": []
         },
         {
-            "name": "set_port",
-            "id": 3,
-            "runtime_data": [
-                {
-                    "name": "port",
-                    "bitwidth": 9
-                }
-            ],
-            "primitives": [
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "egress_spec"
-                            ]
-                        },
-                        {
-                            "type": "runtime_data",
-                            "value": 0
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "rohc_meta",
-                                "decompressed_flag"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x0"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "_decompress_rtp",
-            "id": 4,
+            "id": 3,
             "runtime_data": [],
             "primitives": [
                 {
@@ -938,6 +892,50 @@
                         {
                             "type": "hexstr",
                             "value": "0x800"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "set_port",
+            "id": 4,
+            "runtime_data": [
+                {
+                    "name": "port",
+                    "bitwidth": 9
+                }
+            ],
+            "primitives": [
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "standard_metadata",
+                                "egress_spec"
+                            ]
+                        },
+                        {
+                            "type": "runtime_data",
+                            "value": 0
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "rohc_meta",
+                                "decompressed_flag"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x0"
                         }
                     ]
                 }
@@ -1346,6 +1344,49 @@
                             "value": "rtp_umcomp_header"
                         }
                     ]
+                },
+                {
+                    "op": "remove_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "rtp"
+                        }
+                    ]
+                },
+                {
+                    "op": "remove_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "ipv4"
+                        }
+                    ]
+                },
+                {
+                    "op": "remove_header",
+                    "parameters": [
+                        {
+                            "type": "header",
+                            "value": "udp"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "ethernet",
+                                "etherType"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0xdd00"
+                        }
+                    ]
                 }
             ]
         },
@@ -1558,21 +1599,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",
@@ -1591,21 +1622,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",
@@ -1624,21 +1645,11 @@
                         "value": {
                             "op": "==",
                             "left": {
-                                "type": "expression",
-                                "value": {
-                                    "op": ">>",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "comp_header",
-                                            "id_len"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x6"
-                                    }
-                                }
+                                "type": "field",
+                                "value": [
+                                    "comp_header",
+                                    "id"
+                                ]
                             },
                             "right": {
                                 "type": "hexstr",

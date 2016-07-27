@@ -1,6 +1,7 @@
 from scapy.all import *
 import sys
-import threading
+import threading 
+from threading import Lock
 from struct import *
 
 ip_comps = [b'\xFD\x00\x01\xD6\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x20\x00\x00\x00\x90\x00\x00\x00\x00\x00\x00\x00\x00\x04',
@@ -18,14 +19,17 @@ b'\x4E\x00']
 #ip_comps = [b'\xFD\x00\x01\xD6\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x20\x00\x00\x00\x90\x00\x00\x00\x00\x00\x00\x00\x00\x04']
 
 RTP_PAYLOAD = 'hello, Python world!'
-
+mutex = Lock()
 class Receiver(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
     def received(self, p):
+        mutex.acquire()
         print "Received packet on port 3, exiting"
         hexdump(p)
+        print "End packet\n"
+        mutex.release()
 	sys.exit(0)
 
     def run(self):
@@ -48,14 +52,16 @@ def main():
     ####sendp(p, iface="veth1", verbose=0)
 
     for ip_comp in ip_comps:
+        mutex.acquire()
         Receiver().start()
-        
-        ip_comp = pack('b',(0<<6)+len(ip_comp)&0x3f) + ip_comp + RTP_PAYLOAD
+        prof_id = 0
+        ip_comp = pack('bb', prof_id, len(ip_comp)) + ip_comp + RTP_PAYLOAD
         p = Ether(src="aa:aa:aa:aa:aa:aa",type=0xdd00)/ip_comp
         print "Sending packet on port 0, listening on port 3"
-        time.sleep(1)
         hexdump(p)
         sendp(p, iface="veth1", verbose=0)
+        mutex.release()
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()

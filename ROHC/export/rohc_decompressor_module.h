@@ -54,23 +54,31 @@ extern "C"
 namespace ROHC {
 
 class RohcDecompressorEntity {
+  bool debug_en;
 
 	public:
 		/* Prototypes */
 		void dump_packet(const struct rohc_buf packet);
 		int decompress_init(bool debug_enable);
-		int decompress_header(unsigned char *compressed_header_buffer, unsigned char *umcompressed_header_buffer,
-								size_t comp_header_size, size_t umcomp_header_size);
+		int decompress_header(unsigned char *compressed_header_buffer,
+                          unsigned char *umcompressed_header_buffer,
+								          size_t comp_header_size,
+                          size_t* umcomp_header_size);
+
 		virtual ~RohcDecompressorEntity();
+
+    RohcDecompressorEntity (bool en) : debug_en(en) {} 
+
 	private:
 		// define ROHC decompressor
 		// There is a best way to keep the state of the compressor instead declaring it as global?
 		struct rohc_decomp *decomp_state;       /* the ROHC decompressor */
-    	bool decomp_debug_enable = true;
-		static void print_rohc_traces(void *const priv_ctxt,
+    int init_status = decompress_init(debug_en);
+    bool decomp_debug_enable = debug_en;
+    static void print_rohc_traces(void *const priv_ctxt __attribute__((unused)),
 		                              const rohc_trace_level_t level,
-		                              const rohc_trace_entity_t entity,
-		                              const int profile,
+		                              const rohc_trace_entity_t entity __attribute__((unused)),
+		                              const int profile __attribute__((unused)),
 		                              const char *const format,
 		                              ...)
 		{
@@ -82,10 +90,8 @@ class RohcDecompressorEntity {
 				[ROHC_TRACE_ERROR]   = "ERROR"
 			};
 			va_list args;
-			// Nothing, just for removing the g++ error (unused parameters)	
-			if (priv_ctxt == NULL or profile or entity) goto follow; 
-		follow:	
-			fprintf(stdout, "[%s] ", level_descrs[level]);
+			
+      fprintf(stdout, "[%s] ", level_descrs[level]);
 			va_start(args, format);
 			vfprintf(stdout, format, args);
 			va_end(args);

@@ -33,5 +33,11 @@
 Makefile
 Makefile.in
 
-#
+# Vim swap files
 *.sw*
+
+# Python libs
+*.pyc
+
+# Virtual interfaces pcap files
+*.pcap

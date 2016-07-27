@@ -55,19 +55,27 @@ extern "C"
 namespace ROHC {
 
 class RohcCompressorEntity {
-
+  bool debug_en;
 	public:
 		/* Prototypes */
 		void dump_packet(const struct rohc_buf packet);
 		int compress_init(bool debug_enable);
-		int compress_header(unsigned char *compressed_header_buffer, unsigned char *umcompressed_header_buffer,
-								size_t *comp_header_size, size_t umcomp_header_size);
+		int compress_header(unsigned char *compressed_header_buffer,
+                        unsigned char *umcompressed_header_buffer,
+								        size_t *comp_header_size,
+                        size_t umcomp_header_size);
+ 
 		virtual ~RohcCompressorEntity();	
+    //RohcCompressorEntity (bool debug_enable) : debug_enable(debug_enable) {}
+    RohcCompressorEntity (bool en) : debug_en(en) {} 
+
 	private:
 		// define ROHC compressor
-		// There is a best way to keep the state of the compressor instead declaring it as global?
+		// There is a best way to keep the state of the compressor
+    // instead declaring it as global?
 		struct rohc_comp *comp_state;       /* the ROHC compressor */
-    bool comp_debug_enable = true;
+    int init_status = compress_init(debug_en);
+    bool comp_debug_enable = debug_en;
 		
     static void print_rohc_traces(void *const priv_ctxt __attribute__((unused)),
 		                              const rohc_trace_level_t level,
@@ -94,7 +102,7 @@ class RohcCompressorEntity {
     static int gen_false_random_num(const struct rohc_comp *const comp __attribute__((unused)),
                                     void *const user_context __attribute__((unused)))
     {
-     	return 0;
+     	return rand()%4;
     }
 
     static bool rohc_comp_rtp_cb(const unsigned char *const ip __attribute__((unused)),
