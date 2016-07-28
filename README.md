@@ -30,4 +30,4 @@ In the other one:
 
 The ubuntu image that we use for our testing can be found here - ubuntu-14.04.3-desktop-amd64.iso
 
- [ubuntu-14.04.3-desktop-amd64.iso]: <http://old-releases.ubuntu.com/releases/14.04.3/>
+   [ubuntu-14.04.3-desktop-amd64.iso]: <http://old-releases.ubuntu.com/releases/14.04.3/>
