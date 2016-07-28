@@ -26,8 +26,7 @@ One of them execute:
 In the other one:
 > sudo python send_and_receive.py
 
-##Ubuntu Image
-
-The ubuntu image that we use for our testing can be found here - ubuntu-14.04.3-desktop-amd64.iso
+## Ubuntu Image
+The ubuntu image that we use for our testing can be found here - [ubuntu-14.04.3-desktop-amd64.iso]
 
    [ubuntu-14.04.3-desktop-amd64.iso]: <http://old-releases.ubuntu.com/releases/14.04.3/>
