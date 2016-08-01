@@ -193,7 +193,7 @@ parser parse_rtp {
 }
 
 parser parse_comp {
-    extract(comp_header);
+    //extract(comp_header);
     return ingress;  
 }
 
@@ -221,19 +221,20 @@ field_list recirculate_FL {
 }
 
 action _decompress_ip() {
-    rohc_decomp_header(comp_header, packet_options.payload_size);    
+    rohc_decomp_header();    
     modify_field(rohc_meta.decompressed_flag, 1);
     modify_field(ethernet.etherType, 0x0800);
 }
 
 action _decompress_udp() {
-    rohc_decomp_header(comp_header, packet_options.payload_size);    
+    rohc_decomp_header();    
     modify_field(rohc_meta.decompressed_flag, 1);
     modify_field(ethernet.etherType, 0x0800);
 }
 
 action _decompress_rtp() {
-    rohc_decomp_header(comp_header, packet_options.payload_size);    
+    rohc_decomp_header();  
+		rohc_meta.decompressed_flag = 1;  
     modify_field(rohc_meta.decompressed_flag, 1);
     modify_field(ethernet.etherType, 0x0800);
 }
@@ -351,17 +352,8 @@ table t_compress {
  
 control ingress {
     apply(t_ingress_1);
-    if (valid(comp_header)) {
-        if (comp_header.id == 3) {
-            apply(t_ingress_ip);
-        }
-        if (comp_header.id == 1) {
-            apply(t_ingress_udp);
-        }
-        if (comp_header.id == 0) {
-            apply(t_ingress_rtp);
-        }
-    }
+		if(ethernet.etherType == 0xDD00) 
+	   	apply(t_ingress_rtp);
 }
 
 control egress {
