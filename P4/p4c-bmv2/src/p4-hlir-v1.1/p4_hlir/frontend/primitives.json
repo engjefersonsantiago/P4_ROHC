@@ -123,25 +123,14 @@
 	"properties" : {
 	}
     },
-    "rohc_comp_header" :
+		"rohc_comp_header" :
     {
-	"num_args" : 2,
-	"args" : ["umcompressed_header", "payload_size"],
+	"num_args" : 0,
+	"args" : [],
 	"properties" : {
-	    "compressed_header" : {
-		"type" : "any_header",
-		"access" : "read"
-	    },
-	    "umcompressed_header" : {
-		"type" : "any_header",
-		"access" : "read"
-	    },
-	    "payload_size" : {
-		"type" : "int",
-		"access" : "read"
-	    }
 	}
     },
+   
     "recirculate" :
     {
 	"num_args" : 1,
