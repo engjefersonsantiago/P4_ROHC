@@ -55,7 +55,7 @@ def main():
         mutex.acquire()
         Receiver().start()
         prof_id = 0
-        ip_comp = pack('bb', prof_id, len(ip_comp)) + ip_comp + RTP_PAYLOAD
+        ip_comp = ip_comp + RTP_PAYLOAD
         p = Ether(src="aa:aa:aa:aa:aa:aa",type=0xdd00)/ip_comp
         print "Sending packet on port 0, listening on port 3"
         hexdump(p)
