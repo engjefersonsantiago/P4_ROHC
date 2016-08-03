@@ -61,7 +61,7 @@ def main():
         hexdump(p)
         sendp(p, iface="veth1", verbose=0)
         mutex.release()
-        time.sleep(1)
+        time.sleep(0.001)
 
 if __name__ == '__main__':
     main()

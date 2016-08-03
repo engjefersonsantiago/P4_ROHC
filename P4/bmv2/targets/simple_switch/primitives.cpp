@@ -311,7 +311,7 @@ class rohc_comp_header : public ActionPrimitive<> {
 void operator ()() {
 
  		PHV* phv = get_packet().get_phv();
-    size_t headers_size = 			0;
+    size_t uncomp_headers_size = 			0;
 		size_t first_header_size = 	0;
 
 		std::vector<Header*> uncomp_headers;
@@ -319,8 +319,8 @@ void operator ()() {
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
-        headers_size += header.get_nbytes_packet();			
 				if(!first_header) {
+	        uncomp_headers_size += header.get_nbytes_packet();			
 					uncomp_headers.push_back((Header*) &header);
 					printf("nbytes : %u\n", header.get_nbytes_packet());
 				} else {
@@ -329,18 +329,11 @@ void operator ()() {
 				}
       }
     }
-    size_t uncomp_header_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size;
+    size_t payload_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size - uncomp_headers_size;
 		size_t comp_header_size = 0;
-  						printf("nbytes : %u\n", (unsigned int)uncomp_header_size);
-printf("1111111111111111\n");
 
-    unsigned char *uncomp_buff = new unsigned char [uncomp_header_size];
-   
-printf("2222222222222222\n");
-
-		unsigned char *comp_buff = new unsigned char [uncomp_header_size + 2];
-
-printf("3333333333333333\n");
+    unsigned char *uncomp_buff = new unsigned char [uncomp_headers_size + payload_size];
+		unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
 
     // Initialize the compression data structures 
     int index_comp_buff = 0;
@@ -351,37 +344,24 @@ printf("3333333333333333\n");
   	  		uncomp_buff[index_comp_buff] = *data;
   	  	  ++index_comp_buff;
 					++data;
-			printf("%c", *data);
 				}
-			printf("ddddddddddddddddddddd\n");
-
   	  }
 			h->mark_invalid();
 		}
 
-printf("4444444444444444\n");
-	
-    const char *c = get_packet().prepend(0);
-    for (int i = 0; i < (int) uncomp_header_size; ++i) {
-        uncomp_buff[index_comp_buff] = *c;
-        ++index_comp_buff;
-        ++c;
-    }
-
     printf("Uncompressed packet:\n");
-    for (size_t i = 0; i < uncomp_header_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
+    for (size_t i = 0; i < uncomp_headers_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
     printf("\n");
     
     // Perform the header decompression
-    rohc_c_ent.compress_header(comp_buff, uncomp_buff, &comp_header_size, (size_t) uncomp_header_size);
-
-printf("5555555555555555\n");
+    rohc_c_ent.compress_header(comp_buff, uncomp_buff, &comp_header_size, (size_t) uncomp_headers_size + payload_size);
+		comp_header_size -= payload_size;
 
     printf("Compressed packet:\n");
     printf("N Bytes: %d\n", (int) comp_header_size);
     for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
-
+		
 	  // Positionate the head of the buffer to put the compressed header inside the payload
 	  char *payload_start = get_packet().prepend(comp_header_size);
 	  for (int i = 0; i < (int)comp_header_size; i++)

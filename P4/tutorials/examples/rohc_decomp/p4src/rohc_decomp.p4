@@ -314,29 +314,7 @@ field_list_calculation ipv4_checksum {
 }
 
 action _compress () {
-    modify_field(rtp_all_headers_meta.version_ihl           , ipv4.version_ihl);
-    modify_field(rtp_all_headers_meta.diffserv              , ipv4.diffserv);
-    modify_field(rtp_all_headers_meta.totalLen              , ipv4.totalLen);
-    modify_field(rtp_all_headers_meta.identification        , ipv4.identification);
-    modify_field(rtp_all_headers_meta.flags_fragOffset      , ipv4.flags_fragOffset);
-    modify_field(rtp_all_headers_meta.ttl                   , ipv4.ttl);
-    modify_field(rtp_all_headers_meta.protocol              , ipv4.protocol);
-    modify_field(rtp_all_headers_meta.hdrChecksum           , ipv4.hdrChecksum);
-    modify_field(rtp_all_headers_meta.srcAddr               , ipv4.srcAddr);
-    modify_field(rtp_all_headers_meta.dstAddr               , ipv4.dstAddr);
- 	  modify_field(rtp_all_headers_meta.srcPort               , udp.srcPort);
-	  modify_field(rtp_all_headers_meta.dstPort               , udp.dstPort);
-	  modify_field(rtp_all_headers_meta.hdrLength             , udp.hdrLength);
-	  modify_field(rtp_all_headers_meta.chksum                , udp.chksum);
-		modify_field(rtp_all_headers_meta.version_pad_ext_nCRSC , rtp.version_pad_ext_nCRSC);
-		modify_field(rtp_all_headers_meta.marker_payloadType    , rtp.marker_payloadType);
-		modify_field(rtp_all_headers_meta.sequenceNumber        , rtp.sequenceNumber);
-		modify_field(rtp_all_headers_meta.timestamp             , rtp.timestamp);
-		modify_field(rtp_all_headers_meta.SSRC                  , rtp.SSRC);
-    rohc_comp_header(rtp_all_headers_meta, packet_options.payload_size);   
-	  remove_header(rtp);
-	  remove_header(ipv4);
-	  remove_header(udp);
+    rohc_comp_header();   
 	  modify_field(ethernet.etherType, 0xDD00);
 }
 
