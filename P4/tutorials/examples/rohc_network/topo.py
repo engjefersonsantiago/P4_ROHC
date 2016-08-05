@@ -92,6 +92,9 @@ def main():
 
     for n in xrange(nb_hosts):
         h = net.get('h%d' % (n + 1))
+        h.setMAC('%02x:%02x:%02x:%02x:%02x:%02x' %((n + 1) >> 40, (n + 1) >> 32, (n + 1) >> 24, (n + 1) >> 16, (n + 1) >> 8, n + 1))
+        print "h%d" % (n + 1)
+        print h.MAC()
         for off in ["rx", "tx", "sg"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
             print cmd
