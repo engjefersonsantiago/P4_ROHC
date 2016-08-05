@@ -71,7 +71,7 @@ int RohcCompressorEntity::compress_init(bool debug_enable)
   }
 
 	/* Enable the compression profiles you need */
-	for (int i = 0; i <= ROHC_PROFILE_IP; i++) {
+	for (int i = 0; i <= ROHC_PROFILE_IP; ++i) {
 		const char *profile_name = rohc_get_profile_descr((rohc_profile_t)i); 	
 	  if (comp_debug_enable) printf("\nEnable %s ROHC compression profile\n", profile_name);
 		if(!rohc_comp_enable_profile(comp_state, (rohc_profile_t)i))
@@ -97,25 +97,24 @@ error:
  * @param argv  The table of arguments given to the program
  * @return      0 in case of success, 1 otherwise
 */
-int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffer, unsigned char *umcompressed_header_buffer,
-						size_t *comp_header_size, size_t umcomp_header_size)
+int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffer, unsigned char *uncompressed_header_buffer,
+						size_t *comp_header_size, size_t uncomp_header_size)
 {
 	// Define IP and ROHC packets
 	/* the buffer that will contain the ROHC packet to compress */
 	struct rohc_buf rohc_packet = rohc_buf_init_empty(compressed_header_buffer, BUFFER_SIZE);
 
 	/* the buffer that will contain the resulting IP packet */
-	struct rohc_buf ip_packet = rohc_buf_init_empty(umcompressed_header_buffer, BUFFER_SIZE);
+	struct rohc_buf ip_packet = rohc_buf_init_empty(uncompressed_header_buffer, BUFFER_SIZE);
 
 	rohc_status_t status;
-	size_t i;
 
 	/* create a fake ROHC packet for the purpose of this program */
 	if (comp_debug_enable) printf("\nbuild a ROHC packet\n");
-	for (i = 0; i < umcomp_header_size; i++) {
-    rohc_buf_byte_at(ip_packet, i) = umcompressed_header_buffer[i];
+	for (size_t i = 0; i < uncomp_header_size; ++i) {
+    rohc_buf_byte_at(ip_packet, i) = uncompressed_header_buffer[i];
 	}
-	ip_packet.len = umcomp_header_size;
+	ip_packet.len = uncomp_header_size;
 
 	/* dump the newly-created ROHC packet on terminal */
 	dump_packet(ip_packet);
@@ -133,8 +132,8 @@ int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffe
 			 * rohc_packet: dump the compressed packet on the standard output */
 			if (comp_debug_enable) printf("packet resulting from the ROHC compression:\n");
 			dump_packet(rohc_packet);
- 			//for (i = 0; i < comp_header_size; i++) {
- 			for (i = 0; i < rohc_packet.len; i++) {
+
+ 			for (size_t i = 0; i < rohc_packet.len; ++i) {
 				compressed_header_buffer[i] = rohc_buf_byte_at(rohc_packet, i);
 			}
         *comp_header_size =  rohc_packet.len;
@@ -180,7 +179,7 @@ void RohcCompressorEntity::dump_packet(const struct rohc_buf packet)
 {
 	size_t i;
 
-	for(i = 0; i < packet.len; i++)
+	for(i = 0; i < packet.len; ++i)
 	{
 		if (comp_debug_enable) printf("0x%02x ", rohc_buf_byte_at(packet, i));
 		if(i != 0 && ((i + 1) % 8) == 0)

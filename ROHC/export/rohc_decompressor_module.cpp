@@ -88,15 +88,15 @@ error:
  * @param argv  The table of arguments given to the program
  * @return      0 in case of success, 1 otherwise
 */
-int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_buffer, unsigned char *umcompressed_header_buffer,
-						size_t comp_header_size, size_t* umcomp_header_size)
+int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_buffer, unsigned char *uncompressed_header_buffer,
+						size_t comp_header_size, size_t* uncomp_header_size)
 {
 	// Define IP and ROHC packets
 	/* the buffer that will contain the ROHC packet to decompress */
 	struct rohc_buf rohc_packet = rohc_buf_init_empty(compressed_header_buffer, BUFFER_SIZE);
 
 	/* the buffer that will contain the resulting IP packet */
-	struct rohc_buf ip_packet = rohc_buf_init_empty(umcompressed_header_buffer, BUFFER_SIZE);
+	struct rohc_buf ip_packet = rohc_buf_init_empty(uncompressed_header_buffer, BUFFER_SIZE);
 
 	rohc_status_t status;
 	size_t i;
@@ -123,11 +123,10 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 			 * ip_packet: dump the IP packet on the standard output */
 			if (decomp_debug_enable) printf("packet resulting from the ROHC decompression:\n");
 			dump_packet(ip_packet);
- 			for (i = 0; i < ip_packet.len; i++) {
- 			//for (i = 0; i < *umcomp_header_size; i++) {
-				umcompressed_header_buffer[i] = rohc_buf_byte_at(ip_packet, i);
+ 			for (i = 0; i < ip_packet.len; ++i) {
+				uncompressed_header_buffer[i] = rohc_buf_byte_at(ip_packet, i);
 			}
-			*umcomp_header_size = i;
+			*uncomp_header_size = ip_packet.len;
 		}
 		else
 		{

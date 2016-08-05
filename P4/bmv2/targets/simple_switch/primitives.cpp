@@ -332,13 +332,13 @@ void operator ()() {
     size_t payload_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size - uncomp_headers_size;
 		size_t comp_header_size = 0;
 
-    unsigned char *uncomp_buff = new unsigned char [uncomp_headers_size + payload_size];
+    unsigned char *uncomp_buff = new unsigned char [uncomp_headers_size];
 		unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
 
     // Initialize the compression data structures 
     int index_comp_buff = 0;
 		for(auto h : uncomp_headers) {
-	    for (size_t f = 0; f < h->size(); f++) {
+	    for (size_t f = 0; f < h->size(); ++f) {
   	  	const char* data = h->get_field(f).get_bytes().data();
   	  	for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
   	  		uncomp_buff[index_comp_buff] = *data;
@@ -359,12 +359,12 @@ void operator ()() {
 
     printf("Compressed packet:\n");
     printf("N Bytes: %d\n", (int) comp_header_size);
-    for (size_t i = 0; i < comp_header_size; i++) printf("0x%.2x ", comp_buff[i]);
+    for (size_t i = 0; i < comp_header_size; ++i) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
 		
 	  // Positionate the head of the buffer to put the compressed header inside the payload
 	  char *payload_start = get_packet().prepend(comp_header_size);
-	  for (int i = 0; i < (int)comp_header_size; i++)
+	  for (int i = 0; i < (int)comp_header_size; ++i)
 	  	payload_start[i] = comp_buff[i];	
   }
 };
