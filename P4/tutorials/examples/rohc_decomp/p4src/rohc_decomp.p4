@@ -1,5 +1,3 @@
-#define HEADER_SIZE_ETHERNET 14
-
 header_type ethernet_t {
     fields {
         bit<48> dstAddr;

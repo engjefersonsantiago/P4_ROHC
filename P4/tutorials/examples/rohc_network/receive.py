@@ -27,10 +27,10 @@ class Receiver(threading.Thread):
         print "Received packet"
         hexdump(p)
         print "End packet\n"
-	sys.exit(0)
 
     def run(self):
-				sniff(iface="eth0", prn=lambda x: self.received(x))
+				while(1):
+						sniff(iface="eth0", prn=lambda x: self.received(x))
 
 def main():
         Receiver().start()

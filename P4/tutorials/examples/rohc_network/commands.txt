@@ -1,2 +1,6 @@
-table_set_default route_pkt route
-table_add route_pkt _drop 0 =>
+table_set_default t_ingress_1 _nop
+table_set_default t_ingress_rohc _nop
+table_set_default t_recirc _nop
+table_set_default t_compress _nop
+table_add t_ingress_1 set_port 1 => 2
+table_add t_ingress_1 set_port 2 => 1
