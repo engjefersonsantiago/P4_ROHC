@@ -30,14 +30,6 @@ class Receiver(threading.Thread):
 	sys.exit(0)
 
     def run(self):
-        #sniff(iface="veth1", prn=lambda x: self.received(x))
-        #sniff(iface="veth2", prn=lambda x: self.received(x))
-        #sniff(iface="veth3", prn=lambda x: self.received(x))
-        #sniff(iface="veth4", prn=lambda x: self.received(x))
-        #sniff(iface="veth5", prn=lambda x: self.received(x))
-        #sniff(iface="veth6", prn=lambda x: self.received(x))
-        #sniff(iface="veth7", prn=lambda x: self.received(x))
-        #sniff(iface="veth0", prn=lambda x: self.received(x))
 				sniff(iface="eth0", prn=lambda x: self.received(x))
 
 def main():
