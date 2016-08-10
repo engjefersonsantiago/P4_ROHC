@@ -14,29 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from scapy.all import sniff, sendp
-from scapy.all import Packet
-from scapy.all import ShortField, IntField, LongField, BitField
-
+from scapy.all import *
 import sys
-import struct
+from struct import *
+import threading 
 
-def handle_pkt(pkt):
-    pkt = str(pkt)
-    if len(pkt) < 12: return
-    preamble = pkt[:8]
-    preamble_exp = "\x00" * 8
-    if preamble != preamble_exp: return
-    num_valid = struct.unpack("<L", pkt[8:12])[0]
-    if num_valid != 0:
-        print "received incorrect packet"
-    msg = pkt[12:]
-    print msg
-    sys.stdout.flush()
+class Receiver(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def received(self, p):
+        print "Received packet"
+        hexdump(p)
+        print "End packet\n"
+	sys.exit(0)
+
+    def run(self):
+        #sniff(iface="veth1", prn=lambda x: self.received(x))
+        #sniff(iface="veth2", prn=lambda x: self.received(x))
+        #sniff(iface="veth3", prn=lambda x: self.received(x))
+        #sniff(iface="veth4", prn=lambda x: self.received(x))
+        #sniff(iface="veth5", prn=lambda x: self.received(x))
+        #sniff(iface="veth6", prn=lambda x: self.received(x))
+        #sniff(iface="veth7", prn=lambda x: self.received(x))
+        #sniff(iface="veth0", prn=lambda x: self.received(x))
+				sniff(iface="eth0", prn=lambda x: self.received(x))
 
 def main():
-    sniff(iface = "eth0",
-          prn = lambda x: handle_pkt(x))
+        Receiver().start()
 
 if __name__ == '__main__':
     main()

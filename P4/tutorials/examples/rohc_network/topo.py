@@ -93,13 +93,15 @@ def main():
     for n in xrange(nb_hosts):
         h = net.get('h%d' % (n + 1))
         h.setMAC('%02x:%02x:%02x:%02x:%02x:%02x' %((n + 1) >> 40, (n + 1) >> 32, (n + 1) >> 24, (n + 1) >> 16, (n + 1) >> 8, n + 1))
-        print "h%d" % (n + 1)
-        print h.MAC()
+        h.setIP('192.168.0.%d' % (n + 5))
+        print "##################################\n"
+        print "Host (h%d)" % (n + 1)
+        print "MAC Address: \t%s" % h.MAC()
+        print "IP Address: \t%s\n" 	% h.IP()
+        print "##################################"
         for off in ["rx", "tx", "sg"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
-            print cmd
             h.cmd(cmd)
-        print "disable ipv6"
         h.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
