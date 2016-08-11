@@ -1,3 +1,4 @@
-- Fix the compression to compress directly into the payload.
-- Regression test script.
+- Fix the compression to compress directly into the payload.											-->Done
 - Implement the complex topology network to test compression and decompression.
+-- Sniff properly packets that arrive to destination host.
+- Regression test script.

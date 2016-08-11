@@ -29,8 +29,7 @@ class Receiver(threading.Thread):
         print "End packet\n"
 
     def run(self):
-				while(1):
-						sniff(iface="eth0", prn=lambda x: self.received(x))
+				sniff(iface="eth0", filter="ip", prn=lambda x: self.received(x))
 
 def main():
         Receiver().start()

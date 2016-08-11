@@ -1,5 +1,4 @@
-switches 2
+switches 1
 hosts 2
 h1 s1
-h2 s2
-s1 s2
+h2 s1

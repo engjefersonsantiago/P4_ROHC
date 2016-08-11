@@ -15,8 +15,9 @@
 # limitations under the License.
 
 echo "Cleaning the mininet"
+sudo ./cleanup
 sudo mn -c
-
+	
 THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source $THIS_DIR/../../env.sh

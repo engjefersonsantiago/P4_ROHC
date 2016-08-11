@@ -114,22 +114,33 @@ action _nop() {
 
 action set_port(in bit<9> port) {
    	modify_field(standard_metadata.egress_spec, port);
-   	modify_field(rohc_meta.decompressed_flag, 0);
+		intrinsic_metadata.recirculate_flag = 0; 
 }
 
 field_list recirculate_FL {
-    rohc_meta.decompressed_flag;
+    intrinsic_metadata.recirculate_flag;
+}
+
+action _recirculate() {
+		rohc_meta.decompressed_flag = 0;
+    recirculate(recirculate_FL);
 }
 
 action _decompress() {
     rohc_decomp_header();  
-		rohc_meta.decompressed_flag = 1;  
+		intrinsic_metadata.recirculate_flag = 1;  
 		ethernet.etherType = 0x0800;
+}
+
+action _compress () {
+    rohc_comp_header();
+		rohc_meta.decompressed_flag = 0;
+	  modify_field(ethernet.etherType, 0xDD00);
 }
 
 table t_ingress_1 {
     reads {
-        rohc_meta.decompressed_flag : exact;
+        standard_metadata.ingress_port : exact;
     }
     actions {
         _nop; set_port;
@@ -139,7 +150,7 @@ table t_ingress_1 {
 
 table t_ingress_rohc_decomp {
     reads {
-        rohc_meta.decompressed_flag : exact;
+        ethernet.etherType : exact;
     }
     actions {
         _nop; _decompress;
@@ -147,13 +158,9 @@ table t_ingress_rohc_decomp {
     size : 2;
 }
 
-action _recirculate() {
-    recirculate(recirculate_FL);
-}
-
 table t_recirc {
     reads {
-        rohc_meta.decompressed_flag : exact;
+        intrinsic_metadata.recirculate_flag : exact;
     }
     actions {
         _nop; _recirculate;
@@ -161,14 +168,10 @@ table t_recirc {
     size: 2;
 }
 
-action _compress () {
-    rohc_comp_header();   
-	  modify_field(ethernet.etherType, 0xDD00);
-}
 
 table t_compress {
    reads {
-        rohc_meta.decompressed_flag : exact;
+        standard_metadata.egress_port : exact;
     }
     actions { 
         _nop; _compress;
@@ -178,11 +181,12 @@ table t_compress {
  
 control ingress {
     apply(t_ingress_1);
-		if(ethernet.etherType == 0xDD00) 
-	   	apply(t_ingress_rohc_decomp);
+   	apply(t_ingress_rohc_decomp);
 }
 
 control egress {
-    apply(t_recirc);
-    apply(t_compress);
+		if(intrinsic_metadata.recirculate_flag == 1)
+			apply(t_recirc);
+    else 
+	    apply(t_compress);
 }
