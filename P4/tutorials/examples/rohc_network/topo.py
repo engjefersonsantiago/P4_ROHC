@@ -95,6 +95,8 @@ def main():
         h.setMAC('%02x:%02x:%02x:%02x:%02x:%02x' %((n + 1) >> 40, (n + 1) >> 32, (n + 1) >> 24, (n + 1) >> 16, (n + 1) >> 8, n + 1))
         h.setIP('192.168.0.%d' % (n + 5))
         print "##################################\n"
+        result = h.cmd('ifconfig')
+        print	result
         print "Host (h%d)" % (n + 1)
         print "MAC Address: \t%s" % h.MAC()
         print "IP Address: \t%s\n" 	% h.IP()
