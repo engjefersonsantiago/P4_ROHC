@@ -30,6 +30,10 @@ CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI
 # process back in the foreground
 set -m
 $P4C_BM_SCRIPT p4src/rohc_decomp.p4 --json rohc_decomp.json --p4-v1.1 
+if [ $? -ne 0 ]; then
+echo "p4 compilation failed"
+exit 1
+
 # This gets root permissions, and gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
 sudo $SWITCH_PATH rohc_decomp.json \
@@ -37,6 +41,9 @@ sudo $SWITCH_PATH rohc_decomp.json \
     --nanolog ipc:///tmp/bm-0-log.ipc --log-console \
     --pcap &
 sleep 2
+echo "**************************************"
+echo "Sending commands to switch through CLI"
+echo "**************************************"
 $CLI_PATH rohc_decomp.json < commands.txt
 echo "READY!!!"
 fg

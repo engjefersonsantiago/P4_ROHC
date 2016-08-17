@@ -2,8 +2,7 @@ table_set_default t_ingress_1 _nop
 table_set_default t_ingress_rohc _nop
 table_set_default t_recirc _nop
 table_set_default t_compress _nop
-table_add t_ingress_1 set_port 0 => 3
-table_add t_ingress_1 set_port 1 => 3
+table_add t_ingress_1 set_port 0 => 1
 table_add t_ingress_rohc_decomp _decompress 0xdd00 =>
 table_add t_recirc _recirculate 1 =>
-table_add t_compress _compress 3 =>
+table_add t_compress _compress 2 =>

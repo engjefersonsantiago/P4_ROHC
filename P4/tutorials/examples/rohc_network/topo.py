@@ -95,9 +95,9 @@ def main():
         h.setMAC('%02x:%02x:%02x:%02x:%02x:%02x' %((n + 1) >> 40, (n + 1) >> 32, (n + 1) >> 24, (n + 1) >> 16, (n + 1) >> 8, n + 1))
         h.setIP('192.168.0.%d' % (n + 5))
         print "##################################\n"
+        print "Host (h%d)" % (n + 1)
         result = h.cmd('ifconfig')
         print	result
-        print "Host (h%d)" % (n + 1)
         print "MAC Address: \t%s" % h.MAC()
         print "IP Address: \t%s\n" 	% h.IP()
         print "##################################"
@@ -113,6 +113,14 @@ def main():
     sleep(1)
 
     for i in xrange(nb_switches):
+        s = net.get('s%d' % (i + 1))
+        print "##################################\n"
+        print "Switch (s%d)" % (i + 1)
+        result = s.cmd('ifconfig')
+        print	result
+        print "MAC Address: \t%s" 	% s.MAC()
+        print "IP Address: \t%s\n" 	% s.IP()
+        print "##################################"
         cmd = [args.cli, "--json", args.json,
                "--thrift-port", str(_THRIFT_BASE_PORT + i)]
         with open("commands.txt", "r") as f:
