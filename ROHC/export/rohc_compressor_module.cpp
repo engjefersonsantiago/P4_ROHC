@@ -14,18 +14,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/**
- * @file     example_rohc_comp.c
- * @brief    A program that uses the compression part of the ROHC library
- * @author   Didier Barvaux <didier@barvaux.org>
- */
-
-/**
- * @example example_rohc_comp.c
  *
- * How to compress one ROHC packet into one IP packet.
+ * Modified by Jeferson Santiago da Silva and Laurent Olivier Chiquette
+ *
  */
 
 /* includes required to use the compression part of the ROHC library */
@@ -92,9 +83,6 @@ error:
 
 /**
  * @brief The main entry point for the program
- *
- * @param argc  The number of arguments given to the program
- * @param argv  The table of arguments given to the program
  * @return      0 in case of success, 1 otherwise
 */
 int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffer, unsigned char *uncompressed_header_buffer,
@@ -109,18 +97,18 @@ int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffe
 
 	rohc_status_t status;
 
-	/* create a fake ROHC packet for the purpose of this program */
-	if (comp_debug_enable) printf("\nbuild a ROHC packet\n");
+	/* Build an ip packet from uncompressed headers */
+	if (comp_debug_enable) printf("\nbuild a IP packet\n");
 	for (size_t i = 0; i < uncomp_header_size; ++i) {
     rohc_buf_byte_at(ip_packet, i) = uncompressed_header_buffer[i];
 	}
 	ip_packet.len = uncomp_header_size;
 
-	/* dump the newly-created ROHC packet on terminal */
+	/* dump the newly-created ip packet on terminal */
 	dump_packet(ip_packet);
 
-	/* Now, compress this fake ROHC packet */
-	if (comp_debug_enable) printf("\ncompress the ROHC packet\n");
+	/* Compress this IP packet */
+	if (comp_debug_enable) printf("\ncompress the IP packet\n");
 	status = rohc_compress4(comp_state, ip_packet, &rohc_packet); 
 	if (comp_debug_enable) printf("\n");
 	if(status == ROHC_STATUS_OK)
@@ -136,7 +124,8 @@ int RohcCompressorEntity::compress_header(unsigned char *compressed_header_buffe
  			for (size_t i = 0; i < rohc_packet.len; ++i) {
 				compressed_header_buffer[i] = rohc_buf_byte_at(rohc_packet, i);
 			}
-        *comp_header_size =  rohc_packet.len;
+			/* to update the size of the compressed header size_t passed in parameter*/
+      *comp_header_size =  rohc_packet.len;
 		}
 		else
 		{

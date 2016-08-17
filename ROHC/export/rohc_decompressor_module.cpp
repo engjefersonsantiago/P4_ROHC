@@ -14,18 +14,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/**
- * @file     example_rohc_decomp.c
- * @brief    A program that uses the decompression part of the ROHC library
- * @author   Didier Barvaux <didier@barvaux.org>
- */
-
-/**
- * @example example_rohc_decomp.c
  *
- * How to decompress one ROHC packet into one IP packet.
+ * Modified by Jeferson Santiago da Silva and Laurent Olivier Chiquette
+ *
  */
 
 /* includes required to use the decompression part of the ROHC library */
@@ -83,9 +74,6 @@ error:
 
 /**
  * @brief The main entry point for the program
- *
- * @param argc  The number of arguments given to the program
- * @param argv  The table of arguments given to the program
  * @return      0 in case of success, 1 otherwise
 */
 int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_buffer, unsigned char *uncompressed_header_buffer,
@@ -101,7 +89,7 @@ int RohcDecompressorEntity::decompress_header(unsigned char *compressed_header_b
 	rohc_status_t status;
 	size_t i;
 
-	/* create a fake ROHC packet for the purpose of this program */
+	/* Build a ROHC packet from the P4 compressed header */
 	if (decomp_debug_enable) printf("\nbuild a ROHC packet\n");
 	for (rohc_packet.len = 0; rohc_packet.len < comp_header_size; rohc_packet.len++) {
 		rohc_buf_byte_at(rohc_packet, rohc_packet.len) = compressed_header_buffer[rohc_packet.len];

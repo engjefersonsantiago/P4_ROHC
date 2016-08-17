@@ -14,18 +14,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/**
- * @file     example_rohc_decomp.c
- * @brief    A program that uses the decompression part of the ROHC library
- * @author   Didier Barvaux <didier@barvaux.org>
- */
-
-/**
- * @example example_rohc_decomp.c
  *
- * How to decompress one ROHC packet into one IP packet.
+ * Modified by Jeferson Santiago da Silva and Laurent Olivier Chiquette
+ *
  */
 
 #ifndef ROHC_DECOMP_MODULE_H
