@@ -33,6 +33,7 @@ $P4C_BM_SCRIPT p4src/rohc_decomp.p4 --json rohc_decomp.json --p4-v1.1
 if [ $? -ne 0 ]; then
 echo "p4 compilation failed"
 exit 1
+fi
 
 # This gets root permissions, and gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
