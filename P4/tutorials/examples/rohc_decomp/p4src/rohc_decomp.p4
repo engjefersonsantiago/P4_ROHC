@@ -30,22 +30,22 @@ header_type ipv4_t {
 
 // UDP header
 header_type udp_t {
-	  fields {
-	  	  bit<16> srcPort;
-	  	  bit<16> dstPort;
-	  	  bit<16> hdrLength;
-	  	  bit<16> chksum;
-    }
+    fields {
+        bit<16> srcPort;
+        bit<16> dstPort;
+        bit<16> hdrLength;
+        bit<16> chksum;
+    } 
 }
 
 // RTP header
 header_type rtp_t {
-	  fields {
-		    bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
-		    bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
-		    bit<16>     sequenceNumber;
-		    bit<32>     timestamp;
-		    bit<32>     SSRC;
+    fields {
+   	bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+	bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
+	bit<16>     sequenceNumber;
+	bit<32>     timestamp;
+	bit<32>     SSRC;
     }
 }
 
@@ -118,8 +118,8 @@ action _nop() {
 }
 
 action set_port(in bit<9> port) {
-   	modify_field(standard_metadata.egress_spec, port);
-		intrinsic_metadata.recirculate_flag = 0; 
+    modify_field(standard_metadata.egress_spec, port);
+    intrinsic_metadata.recirculate_flag = 0; 
 }
 
 field_list resubmit_FL {
@@ -127,20 +127,20 @@ field_list resubmit_FL {
 }
 
 action _resubmit() {
-		rohc_meta.decompressed_flag = 0;
+    rohc_meta.decompressed_flag = 0;
     resubmit(resubmit_FL);
 }
 
 action _decompress() {
-		ethernet.etherType = 0x0800;
+    ethernet.etherType = 0x0800;
     rohc_decomp_header();  
-		intrinsic_metadata.recirculate_flag = 1;  
+    intrinsic_metadata.recirculate_flag = 1;  
 }
 
 action _compress () {
     rohc_comp_header();
-		rohc_meta.decompressed_flag = 0;
-	  modify_field(ethernet.etherType, 0xDD00);
+    rohc_meta.decompressed_flag = 0;
+    modify_field(ethernet.etherType, 0xDD00);
 }
 
 table t_ingress_1 {
@@ -186,12 +186,12 @@ table t_compress {
  
 control ingress {
     apply(t_ingress_1);
-   	apply(t_ingress_rohc_decomp);
-		if(intrinsic_metadata.recirculate_flag == 1)			
-			apply(t_resub);
+    apply(t_ingress_rohc_decomp);
+    if(intrinsic_metadata.recirculate_flag == 1)			
+	apply(t_resub);
 }
 
 control egress {
-		if(intrinsic_metadata.recirculate_flag != 1)
-	    apply(t_compress);
+    if(intrinsic_metadata.recirculate_flag != 1)
+        apply(t_compress);
 }
