@@ -59,20 +59,12 @@ header_type intrinsic_metadata_t {
     }
 }
 
-header_type rohc_meta_t {
-    fields {
-        bit<1>  decompressed_flag;
-        bit<1>  compressed_flag;
-    }
-}
-
 header ethernet_t ethernet;
 header ipv4_t ipv4;
 header udp_t udp;
 header rtp_t rtp;
 
 metadata intrinsic_metadata_t intrinsic_metadata;
-metadata rohc_meta_t rohc_meta;
 
 parser start {
     return parse_ethernet;
@@ -127,7 +119,6 @@ field_list resubmit_FL {
 }
 
 action _resubmit() {
-    rohc_meta.decompressed_flag = 0;
     resubmit(resubmit_FL);
 }
 
@@ -139,7 +130,6 @@ action _decompress() {
 
 action _compress () {
     rohc_comp_header();
-    rohc_meta.decompressed_flag = 0;
     modify_field(ethernet.etherType, 0xDD00);
 }
 
