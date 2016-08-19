@@ -261,14 +261,14 @@ REGISTER_PRIMITIVE(resubmit);
 // packet_size: reference to the payload size
 class rohc_decomp_header : public ActionPrimitive<> {
  void operator ()() {
-		// Calculate the size of all real header (not metadata) except the first one
+    // Calculate the size of all real header (not metadata) except the first one
     PHV* phv = get_packet().get_phv();
-		std::vector<Header*> extracted_headers;
+    std::vector<Header*> extracted_headers;
     size_t headers_size = 0;
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
-				extracted_headers.push_back((Header*) &header);
+	extracted_headers.push_back((Header*) &header);
         headers_size += header.get_nbytes_packet();
       }
     }
@@ -284,31 +284,31 @@ class rohc_decomp_header : public ActionPrimitive<> {
     int index_comp_buff = 0;
     const char *c = get_packet().prepend(0);
     for (int i = 0; i < (int) comp_header_size ; ++i) {
-       comp_buff[index_comp_buff] = *c;
-       ++index_comp_buff;
-       ++c;
+      comp_buff[index_comp_buff] = *c;
+      ++index_comp_buff;
+      ++c;
     }
 
     // Perform the header decompression
     rohc_d_ent.decompress_header(comp_buff, uncomp_buff, (size_t) comp_header_size, &uncomp_header_size);
-		
- 		printf("N Bytes: %d\n", (int) uncomp_header_size);
+	
+    printf("N Bytes: %d\n", (int) uncomp_header_size);
     for (size_t i = 0; i < uncomp_header_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
     printf("\n");
-		
-		// Remove the compressed header inside the payload
-		get_packet().remove(comp_header_size);
-		// Positionate the head of the buffer to put the uncompressed header inside the payload
-	  char *payload_start = get_packet().prepend(uncomp_header_size);
-		// Overwrite the packet headers with the uncompressed one
-	  for (int i = 0; i < (int) uncomp_header_size; ++i)
-			payload_start[i] = uncomp_buff[i];	
+	
+    // Remove the compressed header inside the payload
+    get_packet().remove(comp_header_size);
+    // Positionate the head of the buffer to put the uncompressed header inside the payload
+    char *payload_start = get_packet().prepend(uncomp_header_size);
+    // Overwrite the packet headers with the uncompressed one
+    for (int i = 0; i < (int) uncomp_header_size; ++i)
+      payload_start[i] = uncomp_buff[i];	
  		
-		for (int i = extracted_headers.size() - 1; i >= 0; --i) {
-			payload_start = get_packet().prepend(extracted_headers[i]->get_nbytes_packet());			
-			extracted_headers[i]->deparse(payload_start);
-			extracted_headers[i]->mark_invalid();
-		}
+    for (int i = extracted_headers.size() - 1; i >= 0; --i) {
+      payload_start = get_packet().prepend(extracted_headers[i]->get_nbytes_packet());			
+      extracted_headers[i]->deparse(payload_start);
+      extracted_headers[i]->mark_invalid();
+    }
   }
 };
 
@@ -320,45 +320,45 @@ REGISTER_PRIMITIVE(rohc_decomp_header);
 class rohc_comp_header : public ActionPrimitive<> {
 void operator ()() {
 
- 		PHV* phv = get_packet().get_phv();
-    size_t uncomp_headers_size = 	0;
-		size_t first_header_size = 		0;
-		
-		// Get the headers to compress skipping the first one
-		std::vector<Header*> uncomp_headers;
-		bool first_header = true;
+    PHV* phv = get_packet().get_phv();
+    size_t uncomp_headers_size = 0;
+    size_t first_header_size = 	 0;
+
+    // Get the headers to compress skipping the first one
+    std::vector<Header*> uncomp_headers;
+    bool first_header = true;
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
-				if(!first_header) {
-	        uncomp_headers_size += header.get_nbytes_packet();			
-					uncomp_headers.push_back((Header*) &header);
-				} else {
-					first_header = false;
-					first_header_size = header.get_nbytes_packet();		
-				}
+	if(!first_header) {
+	  uncomp_headers_size += header.get_nbytes_packet();			
+	  uncomp_headers.push_back((Header*) &header);
+        } else {  
+          first_header = false;
+          first_header_size = header.get_nbytes_packet();		
+	}
       }
     }
     size_t payload_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size - uncomp_headers_size;
-		size_t comp_header_size = 0;
+    size_t comp_header_size = 0;
 
     unsigned char *uncomp_buff = new unsigned char [uncomp_headers_size];
-		unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
+    unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
 
     // Initialize the compression data structures 
     int index_comp_buff = 0;
-		for(auto h : uncomp_headers) {
-	    for (size_t f = 0; f < h->size(); ++f) {
-  	  	const char* data = h->get_field(f).get_bytes().data();
-  	  	for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
-  	  		uncomp_buff[index_comp_buff] = *data;
-  	  	  ++index_comp_buff;
-					++data;
-				}
-  	  }
-			// Mark headers invalid so they won't be serialized
-			h->mark_invalid();
-		}
+    for(auto h : uncomp_headers) {
+      for (size_t f = 0; f < h->size(); ++f) {
+    	const char* data = h->get_field(f).get_bytes().data();
+  	for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
+  	  uncomp_buff[index_comp_buff] = *data;
+  	  ++index_comp_buff;
+	  ++data;
+	}
+      }
+      // Mark headers invalid so they won't be serialized
+      h->mark_invalid();
+    }
 
     printf("Uncompressed packet:\n");
     for (size_t i = 0; i < uncomp_headers_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
@@ -366,19 +366,19 @@ void operator ()() {
     
     // Perform the header decompression
     rohc_c_ent.compress_header(comp_buff, uncomp_buff, &comp_header_size, (size_t) uncomp_headers_size + payload_size);
-		comp_header_size -= payload_size;
+    comp_header_size -= payload_size;
 
     printf("Compressed packet:\n");
     printf("N Bytes: %d\n", (int) comp_header_size);
     for (size_t i = 0; i < comp_header_size; ++i) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
-		
-	  // Positionate the head of the buffer to put the compressed header inside the payload
-	  char *payload_start = get_packet().prepend(comp_header_size);
-		// Overwrite the packet headers with the compressed one
-	  for (int i = 0; i < (int)comp_header_size; ++i)
-	  	payload_start[i] = comp_buff[i];	
-  }
+	
+    // Positionate the head of the buffer to put the compressed header inside the payload
+    char *payload_start = get_packet().prepend(comp_header_size);
+    // Overwrite the packet headers with the compressed one
+    for (int i = 0; i < (int)comp_header_size; ++i)
+      payload_start[i] = comp_buff[i];	
+    }
 };
 
 REGISTER_PRIMITIVE(rohc_comp_header);
