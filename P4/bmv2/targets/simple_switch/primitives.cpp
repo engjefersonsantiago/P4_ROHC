@@ -307,6 +307,7 @@ class rohc_decomp_header : public ActionPrimitive<> {
     for (int i = extracted_headers.size() - 1; i >= 0; --i) {
       payload_start = get_packet().prepend(extracted_headers[i]->get_nbytes_packet());			
       extracted_headers[i]->deparse(payload_start);
+      // Mark invalid so it won't be serialize again
       extracted_headers[i]->mark_invalid();
     }
   }
@@ -346,19 +347,17 @@ void operator ()() {
     unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
 
     // Initialize the compression data structures 
-    int index_comp_buff = 0;
-    for(auto h : uncomp_headers) {
-      for (size_t f = 0; f < h->size(); ++f) {
-    	const char* data = h->get_field(f).get_bytes().data();
-  	for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
-  	  uncomp_buff[index_comp_buff] = *data;
-  	  ++index_comp_buff;
-	  ++data;
-	}
-      }
-      // Mark headers invalid so they won't be serialized
-      h->mark_invalid();
+    //int index_comp_buff = 0;
+    for(int i = (int)uncomp_headers.size() - 1; i >= 0; --i) {
+      char* data = get_packet().prepend(uncomp_headers[i]->get_nbytes_packet());
+      uncomp_headers[i]->deparse(data);
+      // Mark invalid so it won't be serialize again
+			uncomp_headers[i]->mark_invalid();
     }
+    for(int i = 0; i < (int)uncomp_headers_size; ++i) {
+      char* data = get_packet().prepend(0);
+      uncomp_buff[i] = data[i];
+    }   
 
     printf("Uncompressed packet:\n");
     for (size_t i = 0; i < uncomp_headers_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
@@ -372,9 +371,14 @@ void operator ()() {
     printf("N Bytes: %d\n", (int) comp_header_size);
     for (size_t i = 0; i < comp_header_size; ++i) printf("0x%.2x ", comp_buff[i]);
     printf("\n");
-	
+
+    char* payload_start = NULL;
+    if(comp_header_size < uncomp_headers_size)
+       payload_start = get_packet().remove(uncomp_headers_size - comp_header_size);
+    else
+       payload_start = get_packet().prepend(comp_header_size - uncomp_headers_size);
     // Positionate the head of the buffer to put the compressed header inside the payload
-    char *payload_start = get_packet().prepend(comp_header_size);
+    //char *payload_start = get_packet().prepend(comp_header_size);
     // Overwrite the packet headers with the compressed one
     for (int i = 0; i < (int)comp_header_size; ++i)
       payload_start[i] = comp_buff[i];	
