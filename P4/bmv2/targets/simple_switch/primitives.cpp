@@ -263,12 +263,13 @@ class rohc_decomp_header : public ActionPrimitive<> {
  void operator ()() {
 		// Calculate the size of all real header (not metadata) except the first one
     PHV* phv = get_packet().get_phv();
+		std::vector<Header*> extracted_headers;
     size_t headers_size = 0;
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
+				extracted_headers.push_back((Header*) &header);
         headers_size += header.get_nbytes_packet();
-				printf("nbytes : %u\n", header.get_nbytes_packet());
       }
     }
     printf("PKT LEN : %u \n", get_field("standard_metadata.packet_length").get_uint());
@@ -302,7 +303,12 @@ class rohc_decomp_header : public ActionPrimitive<> {
 		// Overwrite the packet headers with the uncompressed one
 	  for (int i = 0; i < (int) uncomp_header_size; ++i)
 			payload_start[i] = uncomp_buff[i];	
- 
+ 		
+		for (int i = extracted_headers.size() - 1; i >= 0; --i) {
+			payload_start = get_packet().prepend(extracted_headers[i]->get_nbytes_packet());			
+			extracted_headers[i]->deparse(payload_start);
+			extracted_headers[i]->mark_invalid();
+		}
   }
 };
 
@@ -315,8 +321,8 @@ class rohc_comp_header : public ActionPrimitive<> {
 void operator ()() {
 
  		PHV* phv = get_packet().get_phv();
-    size_t uncomp_headers_size = 			0;
-		size_t first_header_size = 	0;
+    size_t uncomp_headers_size = 	0;
+		size_t first_header_size = 		0;
 		
 		// Get the headers to compress skipping the first one
 		std::vector<Header*> uncomp_headers;
@@ -327,7 +333,6 @@ void operator ()() {
 				if(!first_header) {
 	        uncomp_headers_size += header.get_nbytes_packet();			
 					uncomp_headers.push_back((Header*) &header);
-					printf("nbytes : %u\n", header.get_nbytes_packet());
 				} else {
 					first_header = false;
 					first_header_size = header.get_nbytes_packet();		

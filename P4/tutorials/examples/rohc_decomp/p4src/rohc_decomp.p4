@@ -117,19 +117,19 @@ action set_port(in bit<9> port) {
 		intrinsic_metadata.recirculate_flag = 0; 
 }
 
-field_list recirculate_FL {
+field_list resubmit_FL {
     intrinsic_metadata.recirculate_flag;
 }
 
-action _recirculate() {
+action _resubmit() {
 		rohc_meta.decompressed_flag = 0;
-    recirculate(recirculate_FL);
+    resubmit(resubmit_FL);
 }
 
 action _decompress() {
+		ethernet.etherType = 0x0800;
     rohc_decomp_header();  
 		intrinsic_metadata.recirculate_flag = 1;  
-		ethernet.etherType = 0x0800;
 }
 
 action _compress () {
@@ -158,12 +158,12 @@ table t_ingress_rohc_decomp {
     size : 2;
 }
 
-table t_recirc {
+table t_resub {
     reads {
         intrinsic_metadata.recirculate_flag : exact;
     }
     actions {
-        _nop; _recirculate;
+        _nop; _resubmit;
     }
     size: 2;
 }
@@ -182,11 +182,11 @@ table t_compress {
 control ingress {
     apply(t_ingress_1);
    	apply(t_ingress_rohc_decomp);
+		if(intrinsic_metadata.recirculate_flag == 1)			
+			apply(t_resub);
 }
 
 control egress {
-		if(intrinsic_metadata.recirculate_flag == 1)
-			apply(t_recirc);
-    else 
+		if(intrinsic_metadata.recirculate_flag != 1)
 	    apply(t_compress);
 }
