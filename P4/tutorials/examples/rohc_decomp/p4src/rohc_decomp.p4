@@ -1,3 +1,8 @@
+/*
+ * Jeferson Santiago da Silva 
+ * Laurent Olivier Chiquette (l.o.chiquette@gmail.com)
+ */
+
 header_type ethernet_t {
     fields {
         bit<48> dstAddr;
