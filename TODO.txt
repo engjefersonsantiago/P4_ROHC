@@ -3,5 +3,5 @@
 -- Sniff properly packets that arrive to destination host.
 - Regression test script.
 - Install the rohc module in the kernel (avoiding the awful include in the primitives.cpp)
-- Force a deparsing prior compressing a packet (get the up to date header fields)
+- Force a deparsing prior compressing a packet (get the up to date header fields)	-->Done
 - Avoids unecessary pkt recirculation
