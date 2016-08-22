@@ -22,8 +22,9 @@
  */
 
 #include <bm/bm_sim/actions.h>
-#include "../../ROHC/export/rohc_decompressor_module.h"
-#include "../../ROHC/export/rohc_compressor_module.h"
+
+#include <rohc/rohc_decompressor_module.h>
+#include <rohc/rohc_compressor_module.h>
 
 #include <deque>
 #include <random>
@@ -44,8 +45,8 @@ using bm::PHV;
 using ROHC::RohcDecompressorEntity;
 using ROHC::RohcCompressorEntity;
 
-RohcDecompressorEntity rohc_d_ent(true);
-RohcCompressorEntity rohc_c_ent(true);
+RohcDecompressorEntity rohc_d_ent(false);
+RohcCompressorEntity rohc_c_ent(false);
 
 class modify_field : public ActionPrimitive<Data &, const Data &> {
   void operator ()(Data &dst, const Data &src) {
@@ -268,7 +269,7 @@ class rohc_decomp_header : public ActionPrimitive<> {
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
-	extracted_headers.push_back((Header*) &header);
+	      extracted_headers.push_back((Header*) &header);
         headers_size += header.get_nbytes_packet();
       }
     }
@@ -330,13 +331,14 @@ void operator ()() {
     for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
       const Header &header = *it;
       if (header.is_valid() && !header.is_metadata()) {
-	if(!first_header) {
-	  uncomp_headers_size += header.get_nbytes_packet();			
-	  uncomp_headers.push_back((Header*) &header);
-        } else {  
+      	if(!first_header) {
+	        uncomp_headers_size += header.get_nbytes_packet();			
+	        uncomp_headers.push_back((Header*) &header);
+        }
+        else {  
           first_header = false;
           first_header_size = header.get_nbytes_packet();		
-	}
+	      }
       }
     }
     size_t payload_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size - uncomp_headers_size;
@@ -349,12 +351,12 @@ void operator ()() {
     int index_comp_buff = 0;
     for(auto h : uncomp_headers) {
       for (size_t f = 0; f < h->size(); ++f) {
-    	const char* data = h->get_field(f).get_bytes().data();
-  	for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
-  	  uncomp_buff[index_comp_buff] = *data;
-  	  ++index_comp_buff;
-	  ++data;
-	}
+    	  const char* data = h->get_field(f).get_bytes().data();
+  	    for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
+  	      uncomp_buff[index_comp_buff] = *data;
+  	      ++index_comp_buff;
+	        ++data;
+	      }
       }
       // Mark headers invalid so they won't be serialized
       h->mark_invalid();

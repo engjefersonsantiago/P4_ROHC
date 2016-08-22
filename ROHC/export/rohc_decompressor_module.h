@@ -35,9 +35,9 @@ extern "C"
 #include <stdarg.h>
 
 /* includes required to use the decompression part of the ROHC library */
-#include "../src/common/rohc.h"
-#include "../src/decomp/rohc_decomp.h"
-#include "../src/common/rohc_traces.h"
+#include <rohc/rohc.h>
+#include <rohc/rohc_decomp.h>
+#include <rohc/rohc_traces.h>
 
 /** The size (in bytes) of the buffers used in the program */
 #define BUFFER_SIZE 2048
@@ -58,7 +58,7 @@ class RohcDecompressorEntity {
 
 		virtual ~RohcDecompressorEntity();
 
-    RohcDecompressorEntity (bool en) : debug_en(en) {} 
+    RohcDecompressorEntity (bool dbg_en) : debug_en(dbg_en) {} 
 
 	private:
 		// define ROHC decompressor

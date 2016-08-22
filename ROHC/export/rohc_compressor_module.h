@@ -57,7 +57,7 @@ class RohcCompressorEntity {
                         size_t uncomp_header_size);
  
 		virtual ~RohcCompressorEntity();	
-    RohcCompressorEntity (bool en) : debug_en(en) {} 
+    RohcCompressorEntity (bool dbg_en) : debug_en(dbg_en) {} 
 
 	private:
 		// define ROHC compressor

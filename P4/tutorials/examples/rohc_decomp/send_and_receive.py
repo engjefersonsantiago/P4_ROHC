@@ -24,11 +24,11 @@ class Receiver(threading.Thread):
 
     def received(self, p):
         mutex.acquire()
-        print "Received packet on port 3, exiting"
+        print "Received Packet on port 3, exiting"
         hexdump(p)
         print "End packet\n"
         mutex.release()
-	sys.exit(0)
+        sys.exit(0)
 
     def run(self):
         sniff(iface="veth7", prn=lambda x: self.received(x))
@@ -45,7 +45,7 @@ def main():
         hexdump(p)
         sendp(p, iface="veth1", verbose=0)
         mutex.release()
-        time.sleep(0.001)
+        time.sleep(0.1)
 
 if __name__ == '__main__':
     main()
