@@ -102,6 +102,7 @@ SimpleSwitch::SimpleSwitch(int max_port, bool enable_swap)
   force_arith_field("intrinsic_metadata", "lf_field_list");
   force_arith_field("intrinsic_metadata", "mcast_grp");
   force_arith_field("intrinsic_metadata", "resubmit_flag");
+  force_arith_field("intrinsic_metadata", "modify_and_resubmit_flag");
   force_arith_field("intrinsic_metadata", "egress_rid");
   force_arith_field("intrinsic_metadata", "recirculate_flag");
 
@@ -378,6 +379,31 @@ SimpleSwitch::ingress_thread() {
         continue;
       }
     }
+
+    // MODIFY AND RESUBMIT
+    if (phv->has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
+
+      Field &modify_and_resubmit = phv->get_field("intrinsic_metadata.modify_and_resubmit_flag");
+      if (modify_and_resubmit.get_int()) {
+        Deparser *deparser = this->get_deparser("deparser");
+        deparser->deparse(packet.get());
+        BMLOG_DEBUG_PKT(*packet, "Modifying and resubmitting packet");
+        // get the packet ready for being parsed again at the beginning of
+        // ingress
+        p4object_id_t field_list_id = modify_and_resubmit.get_int();
+        modify_and_resubmit.set(0);
+        // TODO(antonin): a copy is not needed here, but I don't yet have an
+        // optimized way of doing this
+        auto packet_copy = copy_ingress_pkt(
+            packet, PKT_INSTANCE_TYPE_RESUBMIT, field_list_id);
+        PHV *phv_copy = packet_copy->get_phv();
+        phv_copy->get_field("standard_metadata.packet_length")
+           .set(packet_copy->get_data_size());
+        input_buffer.push_front(std::move(packet_copy));
+        continue;
+      }
+    }
+
 
     Field &f_instance_type = phv->get_field("standard_metadata.instance_type");
 

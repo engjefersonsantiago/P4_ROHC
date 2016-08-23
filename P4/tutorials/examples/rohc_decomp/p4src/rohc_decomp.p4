@@ -41,11 +41,11 @@ header_type udp_t {
 // RTP header
 header_type rtp_t {
     fields {
-   	bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
-	bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
-	bit<16>     sequenceNumber;
-	bit<32>     timestamp;
-	bit<32>     SSRC;
+   	  bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+	    bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
+	    bit<16>     sequenceNumber;
+	    bit<32>     timestamp;
+	    bit<32>     SSRC;
     }
 }
 
@@ -55,7 +55,8 @@ header_type intrinsic_metadata_t {
         bit<4>    egress_rid;
         bit<16>   mcast_hash;
         bit<32>   lf_field_list;
-        bit<16>   recirculate_flag;
+        bit<16>   resubmit_flag;
+        bit<16>   modify_and_resubmit_flag;
     }
 }
 
@@ -111,24 +112,25 @@ action _nop() {
 
 action set_port(in bit<9> port) {
     modify_field(standard_metadata.egress_spec, port);
-    intrinsic_metadata.recirculate_flag = 0; 
+    intrinsic_metadata.modify_and_resubmit_flag = 0; 
 }
 
 field_list resubmit_FL {
-    intrinsic_metadata.recirculate_flag;
+    intrinsic_metadata.modify_and_resubmit_flag;
 }
 
 action _resubmit() {
-    resubmit(resubmit_FL);
+    modify_and_resubmit(resubmit_FL);
 }
 
 action _decompress() {
     ethernet.etherType = 0x0800;
     rohc_decomp_header();  
-    intrinsic_metadata.recirculate_flag = 1;  
+    intrinsic_metadata.modify_and_resubmit_flag = 1;  
 }
 
 action _compress () {
+    //ipv4.ttl = ipv4.ttl - 1;
     rohc_comp_header();
     modify_field(ethernet.etherType, 0xDD00);
 }
@@ -155,7 +157,7 @@ table t_ingress_rohc_decomp {
 
 table t_resub {
     reads {
-        intrinsic_metadata.recirculate_flag : exact;
+        intrinsic_metadata.modify_and_resubmit_flag : exact;
     }
     actions {
         _nop; _resubmit;
@@ -173,15 +175,40 @@ table t_compress {
     }
     size : 1;
 }
+
+field_list ipv4_checksum_list {
+    ipv4.version_ihl;
+    ipv4.diffserv;
+    ipv4.totalLen;
+    ipv4.identification;
+    ipv4.flags_fragOffset;
+    ipv4.ttl;
+    ipv4.protocol;
+    ipv4.srcAddr;
+    ipv4.dstAddr;
+}
+
+field_list_calculation ipv4_checksum {
+    input {
+        ipv4_checksum_list;
+    }
+    algorithm     : csum16;
+    output_width  : 16;
+}
+
+calculated_field ipv4.hdrChecksum  {
+    //verify ipv4_checksum;
+    update ipv4_checksum;
+}
  
 control ingress {
     apply(t_ingress_1);
     apply(t_ingress_rohc_decomp);
-    if(intrinsic_metadata.recirculate_flag == 1)			
-	apply(t_resub);
+    if(intrinsic_metadata.modify_and_resubmit_flag == 1)			
+	      apply(t_resub);
 }
 
 control egress {
-    if(intrinsic_metadata.recirculate_flag != 1)
+    if(intrinsic_metadata.modify_and_resubmit_flag != 1)
         apply(t_compress);
 }

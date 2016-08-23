@@ -22,6 +22,9 @@
  */
 
 #include <bm/bm_sim/actions.h>
+#include <bm/bm_sim/deparser.h>
+//#include <bm/bm_sim/packet.h>
+//#include <bm/bm_sim/context.h>
 
 #include <rohc/rohc_decompressor_module.h>
 #include <rohc/rohc_compressor_module.h>
@@ -41,6 +44,9 @@ using bm::RegisterArray;
 using bm::NamedCalculation;
 using bm::HeaderStack;
 using bm::PHV;
+//using bm::Deparser;
+//using bm::Packet;
+//using bm::Context;
 
 using ROHC::RohcDecompressorEntity;
 using ROHC::RohcCompressorEntity;
@@ -254,6 +260,17 @@ class resubmit : public ActionPrimitive<const Data &> {
 
 REGISTER_PRIMITIVE(resubmit);
 
+class modify_and_resubmit : public ActionPrimitive<const Data &> {
+  void operator ()(const Data &field_list_id) {
+    if (get_phv().has_field("intrinsic_metadata.modify_and_resubmit_flag")) {
+      get_phv().get_field("intrinsic_metadata.modify_and_resubmit_flag")
+          .set(field_list_id);
+    }
+  }
+};
+
+REGISTER_PRIMITIVE(modify_and_resubmit);
+
 // Used to define enough space to extract the compressed header to the uncomp_buffer
 #define EXTRA_LENGHT_UNCOMP 80
 
@@ -319,7 +336,11 @@ REGISTER_PRIMITIVE(rohc_decomp_header);
 // uncompressed_header: reference to the uncompressed header
 // packet_size: reference to the payload size
 class rohc_comp_header : public ActionPrimitive<> {
-void operator ()() {
+  void operator ()() {
+    
+    //Context ctx;
+    //Deparser *deparser = ctx.get_deparser("deparser");
+    //deparser->deparse(&get_packet());
 
     PHV* phv = get_packet().get_phv();
     size_t uncomp_headers_size = 0;
