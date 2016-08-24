@@ -92,7 +92,7 @@ class P4Switch(Switch):
             args.extend( ['--thrift-port', str(self.thrift_port)] )
         if self.nanomsg:
             args.extend( ['--nanolog', self.nanomsg] )
-        args.extend( ['--device-id', str(self.device_id)] )
+        args.extend( ['--device-id', str(self.device_id) + ' --log-console'] )
         P4Switch.device_id += 1
         args.append(self.json_path)
 

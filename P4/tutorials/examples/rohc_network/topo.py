@@ -80,6 +80,7 @@ def read_topo():
 def main():
     nb_hosts, nb_switches, links = read_topo()
 
+    print links
     topo = MyTopo(args.behavioral_exe,
                   args.json,
                   nb_hosts, nb_switches, links)
