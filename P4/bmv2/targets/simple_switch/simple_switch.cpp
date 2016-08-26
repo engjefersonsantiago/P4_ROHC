@@ -404,7 +404,6 @@ SimpleSwitch::ingress_thread() {
       }
     }
 
-
     Field &f_instance_type = phv->get_field("standard_metadata.instance_type");
 
     // MULTICAST

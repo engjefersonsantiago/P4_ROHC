@@ -41,11 +41,11 @@ header_type udp_t {
 // RTP header
 header_type rtp_t {
     fields {
-   	  bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
-	    bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
-	    bit<16>     sequenceNumber;
-	    bit<32>     timestamp;
-	    bit<32>     SSRC;
+   	    bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+	      bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
+	      bit<16>     sequenceNumber;
+	      bit<32>     timestamp;
+	      bit<32>     SSRC;
     }
 }
 
@@ -60,12 +60,20 @@ header_type intrinsic_metadata_t {
     }
 }
 
+header_type rohc_metadata_t {
+    fields {
+        bit<1>    supported_profile;
+    }
+}
+
+
 header ethernet_t ethernet;
 header ipv4_t ipv4;
 header udp_t udp;
 header rtp_t rtp;
 
 metadata intrinsic_metadata_t intrinsic_metadata;
+metadata rohc_metadata_t rohc_metadata;
 
 parser start {
     return parse_ethernet;
@@ -73,6 +81,7 @@ parser start {
 
 parser parse_ethernet {
     extract(ethernet);
+    set_metadata(rohc_metadata.supported_profile, 0);
     return select(ethernet.etherType) {
         0x0800    : parse_ipv4;
         default   : ingress;
@@ -81,6 +90,7 @@ parser parse_ethernet {
 
 parser parse_ipv4 {
     extract(ipv4);
+    set_metadata(rohc_metadata.supported_profile, 1);
     return select(ipv4.protocol){
         0x11      : parse_udp; 
         default   : ingress;  
@@ -117,6 +127,7 @@ action set_port(in bit<9> port) {
 
 field_list resubmit_FL {
     intrinsic_metadata.modify_and_resubmit_flag;
+    standard_metadata.ingress_port;   // Resubmitting packet in the same ingress port
 }
 
 action _resubmit() {
@@ -168,7 +179,8 @@ table t_resub {
 
 table t_compress {
    reads {
-        standard_metadata.egress_port : exact;
+        //standard_metadata.egress_port : exact;
+        rohc_metadata.supported_profile : exact;
     }
     actions { 
         _nop; _compress;
@@ -209,6 +221,7 @@ control ingress {
 }
 
 control egress {
-    if(intrinsic_metadata.modify_and_resubmit_flag != 1)
+    if(intrinsic_metadata.modify_and_resubmit_flag != 1
+      and rohc_metadata.supported_profile == 1)
         apply(t_compress);
 }

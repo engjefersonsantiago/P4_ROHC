@@ -23,7 +23,8 @@ class P4Host(Host):
 
         self.defaultIntf().rename("eth0")
 
-        for off in ["rx", "tx", "sg"]:
+        #for off in ["rx", "tx", "sg"]:
+        for off in ["rx", "tx", "sg", "tso", "ufo", "gso", "gro", "lro", "rxvlan", "txvlan", "rxhash"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
             self.cmd(cmd)
 
@@ -60,7 +61,8 @@ class P4Switch(Switch):
         self.sw_path = sw_path
         self.json_path = json_path
         self.verbose = verbose
-        logfile = '/tmp/p4s.%s.log' % self.name
+        self.cmd( 'mkdir ./logs' )
+        logfile = './logs/p4s.%s.log' % self.name
         self.output = open(logfile, 'w')
         self.thrift_port = thrift_port
         self.pcap_dump = pcap_dump
@@ -96,7 +98,7 @@ class P4Switch(Switch):
         P4Switch.device_id += 1
         args.append(self.json_path)
 
-        logfile = '/tmp/p4s.%s.log' % self.name
+        logfile = './logs/p4s.%s.log' % self.name
 
         print ' '.join(args)
 

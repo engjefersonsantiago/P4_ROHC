@@ -102,7 +102,8 @@ def main():
         print "MAC Address: \t%s" % h.MAC()
         print "IP Address: \t%s\n" 	% h.IP()
         print "##################################"
-        for off in ["rx", "tx", "sg"]:
+        #for off in ["rx", "tx", "sg"]:
+        for off in ["rx", "tx", "sg", "tso", "ufo", "gso", "gro", "lro", "rxvlan", "txvlan", "rxhash"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
             h.cmd(cmd)
         h.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
