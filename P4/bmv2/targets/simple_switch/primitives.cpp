@@ -31,6 +31,7 @@
 
 #include <deque>
 #include <random>
+#include <chrono>
 
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
@@ -279,6 +280,8 @@ REGISTER_PRIMITIVE(modify_and_resubmit);
 // packet_size: reference to the payload size
 class rohc_decomp_header : public ActionPrimitive<> {
  void operator ()() {
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();   
+
     // Calculate the size of all real header (not metadata) except the first one
     PHV* phv = get_packet().get_phv();
     std::vector<Header*> extracted_headers;
@@ -327,6 +330,11 @@ class rohc_decomp_header : public ActionPrimitive<> {
       extracted_headers[i]->deparse(payload_start);
       extracted_headers[i]->mark_invalid();
     }
+
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    printf("Decompression execution time: %lu useconds\n", (uint64_t) duration);
+
   }
 };
 
@@ -337,6 +345,7 @@ REGISTER_PRIMITIVE(rohc_decomp_header);
 // packet_size: reference to the payload size
 class rohc_comp_header : public ActionPrimitive<> {
   void operator ()() {
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     
     //Context ctx;
     //Deparser *deparser = ctx.get_deparser("deparser");
@@ -399,9 +408,15 @@ class rohc_comp_header : public ActionPrimitive<> {
     // Positionate the head of the buffer to put the compressed header inside the payload
     char *payload_start = get_packet().prepend(comp_header_size);
     // Overwrite the packet headers with the compressed one
-    for (int i = 0; i < (int)comp_header_size; ++i)
-      payload_start[i] = comp_buff[i];	
+    for (int i = 0; i < (int)comp_header_size; ++i){
+      payload_start[i] = comp_buff[i];
     }
+
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    printf("Compression execution time: %lu useconds\n", (uint64_t) duration);
+
+  }
 };
 
 REGISTER_PRIMITIVE(rohc_comp_header);
