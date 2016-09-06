@@ -54,4 +54,10 @@ ExternType::_set_name_and_id(const std::string &name, p4object_id_t id) {
   this->id = id;
 }
 
+void
+ExternType::_set_type(const std::string &type) {
+  this->type = type;
+}
+
+
 }  // namespace bm

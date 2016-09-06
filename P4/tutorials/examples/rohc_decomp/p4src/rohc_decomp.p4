@@ -103,6 +103,23 @@ parser parse_rtp {
     return ingress;  
 }
 
+extern_type ExternRohcCompressor {
+        
+    attribute verbose {
+        /* Must be either:
+            quiet
+            debug_mode
+        */
+        type: string;
+    }
+
+    method rohc_comp_header ();
+}
+
+extern ExternRohcCompressor my_rohc_comp {
+  verbose: 0x01;
+}
+
 action _drop() {
     drop();
 }
@@ -131,7 +148,8 @@ action _decompress() {
 
 action _compress () {
     //ipv4.ttl = ipv4.ttl - 1;
-    rohc_comp_header();
+    my_rohc_comp.rohc_comp_header();
+    //rohc_comp_header();
     modify_field(ethernet.etherType, 0xDD00);
 }
 

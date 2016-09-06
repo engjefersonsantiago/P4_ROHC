@@ -43,6 +43,7 @@ simple_switch_CLI
 
 AM_CPPFLAGS += \
 -I$(srcdir)/thrift/src/ \
+-isystem $(top_srcdir)/third_party \
 -I$(builddir)/gen-cpp
 
 libsimpleswitch_la_LIBADD = \
@@ -51,6 +52,7 @@ $(top_builddir)/src/bf_lpm_trie/libbflpmtrie.la \
 $(top_builddir)/src/BMI/libbmi.la \
 $(top_builddir)/third_party/jsoncpp/libjson.la \
 $(top_builddir)/../../ROHC/export/librohc_compressor_module.la \
+$(top_builddir)/third_party/gtest/libgtest.la \
 -lboost_system -lboost_thread $(THRIFT_LIB) -lboost_program_options
 
 libsimpleswitch_la_LDFLAGS = -pthread
@@ -58,7 +60,7 @@ libsimpleswitch_la_LDFLAGS = -pthread
 noinst_LTLIBRARIES = libsimpleswitch.la
 
 libsimpleswitch_la_SOURCES = \
-simple_switch.cpp simple_switch.h primitives.cpp \
+simple_switch.cpp simple_switch.h extern_rohc_comp.cpp primitives.cpp \
 thrift/src/SimpleSwitch_server.cpp
 
 bin_PROGRAMS = simple_switch

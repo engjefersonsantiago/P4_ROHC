@@ -58,7 +58,7 @@ class RohcDecompressorEntity {
 
 		virtual ~RohcDecompressorEntity();
 
-    RohcDecompressorEntity (bool dbg_en) : debug_en(dbg_en) {} 
+    RohcDecompressorEntity (bool dbg_en = true) : debug_en(dbg_en) {} 
 
 	private:
 		// define ROHC decompressor

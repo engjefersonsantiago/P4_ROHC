@@ -135,14 +135,13 @@
 	"properties" : {
 	}
     },
-		"rohc_comp_header" :
+    "rohc_comp_header" :
     {
 	"num_args" : 0,
 	"args" : [],
 	"properties" : {
 	}
-    },
-   
+    }, 
     "recirculate" :
     {
 	"num_args" : 1,

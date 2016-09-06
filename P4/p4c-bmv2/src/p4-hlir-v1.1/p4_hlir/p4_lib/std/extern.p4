@@ -271,3 +271,19 @@ extern_type action_profile {
 extern_type digest_receiver {
     method send_digest (in field_list digest);
 }
+
+/***************************************************************************/
+
+extern_type ExternRohcCompressor {
+        
+    attribute verbose {
+        /* Must be either:
+            quiet
+            debug_mode
+        */
+        type: string;
+    }
+
+    method rohc_comp_header ();
+}
+

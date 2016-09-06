@@ -135,10 +135,11 @@ libsimpleswitch_la_DEPENDENCIES =  \
 	$(top_builddir)/src/BMI/libbmi.la \
 	$(top_builddir)/third_party/jsoncpp/libjson.la \
 	$(top_builddir)/../../ROHC/export/librohc_compressor_module.la \
+	$(top_builddir)/third_party/gtest/libgtest.la \
 	$(am__DEPENDENCIES_1)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libsimpleswitch_la_OBJECTS = simple_switch.lo primitives.lo \
-	thrift/src/SimpleSwitch_server.lo
+am_libsimpleswitch_la_OBJECTS = simple_switch.lo extern_rohc_comp.lo \
+	primitives.lo thrift/src/SimpleSwitch_server.lo
 libsimpleswitch_la_OBJECTS = $(am_libsimpleswitch_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -293,8 +294,8 @@ am__relativize = \
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_CFLAGS = @AM_CFLAGS@
-AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(srcdir)/thrift/src/ \
-	-I$(builddir)/gen-cpp
+AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(srcdir)/thrift/src/ -isystem \
+	$(top_srcdir)/third_party -I$(builddir)/gen-cpp
 AM_CXXFLAGS = @AM_CXXFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
@@ -462,12 +463,13 @@ $(top_builddir)/src/bf_lpm_trie/libbflpmtrie.la \
 $(top_builddir)/src/BMI/libbmi.la \
 $(top_builddir)/third_party/jsoncpp/libjson.la \
 $(top_builddir)/../../ROHC/export/librohc_compressor_module.la \
+$(top_builddir)/third_party/gtest/libgtest.la \
 -lboost_system -lboost_thread $(THRIFT_LIB) -lboost_program_options
 
 libsimpleswitch_la_LDFLAGS = -pthread
 noinst_LTLIBRARIES = libsimpleswitch.la
 libsimpleswitch_la_SOURCES = \
-simple_switch.cpp simple_switch.h primitives.cpp \
+simple_switch.cpp simple_switch.h extern_rohc_comp.cpp primitives.cpp \
 thrift/src/SimpleSwitch_server.cpp
 
 simple_switch_LDADD = \
@@ -700,6 +702,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extern_rohc_comp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/primitives.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simple_switch.Plo@am__quote@

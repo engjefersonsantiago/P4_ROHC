@@ -46,4 +46,4 @@ run autoheader
 run automake --add-missing
 
 chmod +x $( dirname $0 )/configure
-$( dirname $0 )/configure 
+$( dirname $0 )/configure

@@ -22,16 +22,9 @@
  */
 
 #include <bm/bm_sim/actions.h>
-#include <bm/bm_sim/deparser.h>
-//#include <bm/bm_sim/packet.h>
-//#include <bm/bm_sim/context.h>
-
 #include <rohc/rohc_decompressor_module.h>
-#include <rohc/rohc_compressor_module.h>
-
 #include <deque>
 #include <random>
-#include <chrono>
 
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
@@ -45,15 +38,10 @@ using bm::RegisterArray;
 using bm::NamedCalculation;
 using bm::HeaderStack;
 using bm::PHV;
-//using bm::Deparser;
-//using bm::Packet;
-//using bm::Context;
 
 using ROHC::RohcDecompressorEntity;
-using ROHC::RohcCompressorEntity;
 
 RohcDecompressorEntity rohc_d_ent(false);
-RohcCompressorEntity rohc_c_ent(false);
 
 class modify_field : public ActionPrimitive<Data &, const Data &> {
   void operator ()(Data &dst, const Data &src) {
@@ -343,84 +331,6 @@ REGISTER_PRIMITIVE(rohc_decomp_header);
 // compressed_header: reference to the compressed header
 // uncompressed_header: reference to the uncompressed header
 // packet_size: reference to the payload size
-class rohc_comp_header : public ActionPrimitive<> {
-  void operator ()() {
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-    
-    //Context ctx;
-    //Deparser *deparser = ctx.get_deparser("deparser");
-    //deparser->deparse(&get_packet());
-
-    PHV* phv = get_packet().get_phv();
-    size_t uncomp_headers_size = 0;
-    size_t first_header_size = 	 0;
-
-    // Get the headers to compress skipping the first one
-    std::vector<Header*> uncomp_headers;
-    bool first_header = true;
-    for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
-      const Header &header = *it;
-      if (header.is_valid() && !header.is_metadata()) {
-      	if(!first_header) {
-	        uncomp_headers_size += header.get_nbytes_packet();			
-	        uncomp_headers.push_back((Header*) &header);
-        }
-        else {  
-          first_header = false;
-          first_header_size = header.get_nbytes_packet();		
-	      }
-      }
-    }
-    size_t payload_size = get_field("standard_metadata.packet_length").get_uint() - first_header_size - uncomp_headers_size;
-    size_t comp_header_size = 0;
-
-    unsigned char *uncomp_buff = new unsigned char [uncomp_headers_size];
-    unsigned char *comp_buff = new unsigned char [uncomp_headers_size + payload_size + 2];
-
-    // Initialize the compression data structures 
-    int index_comp_buff = 0;
-    for(auto h : uncomp_headers) {
-      for (size_t f = 0; f < h->size(); ++f) {
-    	  const char* data = h->get_field(f).get_bytes().data();
-  	    for (int i = 0; i < (int) h->get_field(f).get_bytes().size(); ++i) {
-  	      uncomp_buff[index_comp_buff] = *data;
-  	      ++index_comp_buff;
-	        ++data;
-	      }
-      }
-      // Mark headers invalid so they won't be serialized
-      h->mark_invalid();
-    }
-
-    printf("Uncompressed packet:\n");
-    for (size_t i = 0; i < uncomp_headers_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
-    printf("\n");
-    
-    // Perform the header decompression
-    rohc_c_ent.compress_header(comp_buff, uncomp_buff, &comp_header_size, (size_t) uncomp_headers_size + payload_size);
-    comp_header_size -= payload_size;
-
-    printf("Compressed packet:\n");
-    printf("N Bytes: %d\n", (int) comp_header_size);
-    for (size_t i = 0; i < comp_header_size; ++i) printf("0x%.2x ", comp_buff[i]);
-    printf("\n");
-	
-    // Positionate the head of the buffer to put the compressed header inside the payload
-    char *payload_start = get_packet().prepend(comp_header_size);
-    // Overwrite the packet headers with the compressed one
-    for (int i = 0; i < (int)comp_header_size; ++i){
-      payload_start[i] = comp_buff[i];
-    }
-
-    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    printf("Compression execution time: %lu useconds\n", (uint64_t) duration);
-
-  }
-};
-
-REGISTER_PRIMITIVE(rohc_comp_header);
-
 class recirculate : public ActionPrimitive<const Data &> {
   void operator ()(const Data &field_list_id) {
     if (get_phv().has_field("intrinsic_metadata.recirculate_flag")) {

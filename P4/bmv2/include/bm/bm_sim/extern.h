@@ -100,9 +100,12 @@ class ExternType {
 
   // called in P4Objects after constructing the instance
   void _set_name_and_id(const std::string &name, p4object_id_t id);
+  
+  void _set_type(const std::string &type);
 
   const std::string &get_name() const { return name; }
   p4object_id_t get_id() const { return id; }
+  const std::string &get_type() const { return type; }
 
   using UniqueLock = std::unique_lock<std::mutex>;
   UniqueLock _unique_lock() { return UniqueLock(mutex); }
@@ -125,6 +128,7 @@ class ExternType {
   Packet *pkt{nullptr};
   // set by _set_name_and_id
   std::string name{};
+  std::string type{};
   p4object_id_t id{};
 };
 
