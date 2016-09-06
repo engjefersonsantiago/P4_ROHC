@@ -138,7 +138,8 @@ libsimpleswitch_la_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libsimpleswitch_la_OBJECTS = simple_switch.lo extern_rohc_comp.lo \
-	primitives.lo thrift/src/SimpleSwitch_server.lo
+	extern_rohc_decomp.lo primitives.lo \
+	thrift/src/SimpleSwitch_server.lo
 libsimpleswitch_la_OBJECTS = $(am_libsimpleswitch_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -467,8 +468,8 @@ $(top_builddir)/../../ROHC/export/librohc_compressor_module.la \
 libsimpleswitch_la_LDFLAGS = -pthread
 noinst_LTLIBRARIES = libsimpleswitch.la
 libsimpleswitch_la_SOURCES = \
-simple_switch.cpp simple_switch.h extern_rohc_comp.cpp primitives.cpp \
-thrift/src/SimpleSwitch_server.cpp
+simple_switch.cpp simple_switch.h extern_rohc_comp.cpp extern_rohc_decomp.cpp \
+primitives.cpp thrift/src/SimpleSwitch_server.cpp
 
 simple_switch_LDADD = \
 $(top_builddir)/src/bm_runtime/libbmruntime.la \
@@ -701,6 +702,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extern_rohc_comp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extern_rohc_decomp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/primitives.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simple_switch.Plo@am__quote@

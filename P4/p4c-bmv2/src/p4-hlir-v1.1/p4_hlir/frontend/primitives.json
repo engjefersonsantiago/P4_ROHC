@@ -128,20 +128,6 @@
 	    }
 	}
     },
-    "rohc_decomp_header" :
-    {
-	"num_args" : 0,
-	"args" : [],
-	"properties" : {
-	}
-    },
-    "rohc_comp_header" :
-    {
-	"num_args" : 0,
-	"args" : [],
-	"properties" : {
-	}
-    }, 
     "recirculate" :
     {
 	"num_args" : 1,

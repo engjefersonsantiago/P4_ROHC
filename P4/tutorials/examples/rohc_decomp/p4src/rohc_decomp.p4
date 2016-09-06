@@ -120,6 +120,24 @@ extern ExternRohcCompressor my_rohc_comp {
   verbose: 0x01;
 }
 
+extern_type ExternRohcDecompressor {
+        
+    attribute verbose {
+        /* Must be either:
+            quiet
+            debug_mode
+        */
+        type: string;
+    }
+
+    method rohc_decomp_header ();
+}
+
+extern ExternRohcDecompressor my_rohc_decomp {
+  verbose: 0x01;
+}
+
+
 action _drop() {
     drop();
 }
@@ -142,7 +160,7 @@ action _resubmit() {
 
 action _decompress() {
     ethernet.etherType = 0x0800;
-    rohc_decomp_header();  
+    my_rohc_decomp.rohc_decomp_header();  
     intrinsic_metadata.modify_and_resubmit_flag = 1;  
 }
 

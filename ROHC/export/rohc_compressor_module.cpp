@@ -73,7 +73,7 @@ int RohcCompressorEntity::compress_init(bool debug_enable)
 		}
 	}
 	
-	if (comp_debug_enable) printf("\nDecompressor initialization ended successfully.\n");
+	if (comp_debug_enable) printf("\nCompressor initialization ended successfully.\n");
 	return 0;
 
 error:

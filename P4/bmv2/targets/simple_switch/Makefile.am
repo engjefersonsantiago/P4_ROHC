@@ -58,8 +58,8 @@ libsimpleswitch_la_LDFLAGS = -pthread
 noinst_LTLIBRARIES = libsimpleswitch.la
 
 libsimpleswitch_la_SOURCES = \
-simple_switch.cpp simple_switch.h extern_rohc_comp.cpp primitives.cpp \
-thrift/src/SimpleSwitch_server.cpp
+simple_switch.cpp simple_switch.h extern_rohc_comp.cpp extern_rohc_decomp.cpp \
+primitives.cpp thrift/src/SimpleSwitch_server.cpp
 
 bin_PROGRAMS = simple_switch
 

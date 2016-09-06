@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-/*
+/* P4 compatible extern type for ROHC header compression 
  * Jeferson Santiago da Silva (eng.jefersonsantiago@gmail.com)
  */
 
@@ -23,7 +23,6 @@
 #include <bm/bm_sim/extern.h>
 #include <rohc/rohc_compressor_module.h>
 
-//using namespace bm;
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 

@@ -22,7 +22,6 @@
  */
 
 #include <bm/bm_sim/actions.h>
-#include <rohc/rohc_decompressor_module.h>
 #include <deque>
 #include <random>
 
@@ -38,10 +37,6 @@ using bm::RegisterArray;
 using bm::NamedCalculation;
 using bm::HeaderStack;
 using bm::PHV;
-
-using ROHC::RohcDecompressorEntity;
-
-RohcDecompressorEntity rohc_d_ent(false);
 
 class modify_field : public ActionPrimitive<Data &, const Data &> {
   void operator ()(Data &dst, const Data &src) {
@@ -259,74 +254,6 @@ class modify_and_resubmit : public ActionPrimitive<const Data &> {
 };
 
 REGISTER_PRIMITIVE(modify_and_resubmit);
-
-// Used to define enough space to extract the compressed header to the uncomp_buffer
-#define EXTRA_LENGHT_UNCOMP 80
-
-// compressed_header: reference to the compressed header
-// uncompressed_header: reference to the uncompressed header
-// packet_size: reference to the payload size
-class rohc_decomp_header : public ActionPrimitive<> {
- void operator ()() {
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();   
-
-    // Calculate the size of all real header (not metadata) except the first one
-    PHV* phv = get_packet().get_phv();
-    std::vector<Header*> extracted_headers;
-    size_t headers_size = 0;
-    for (auto it = phv->header_begin(); it != phv->header_end(); ++it) {
-      const Header &header = *it;
-      if (header.is_valid() && !header.is_metadata()) {
-	      extracted_headers.push_back((Header*) &header);
-        headers_size += header.get_nbytes_packet();
-      }
-    }
-    printf("PKT LEN : %u \n", get_field("standard_metadata.packet_length").get_uint());
-    printf("HDR LEN : %u \n", (unsigned int) headers_size);
-
-    size_t comp_header_size = get_field("standard_metadata.packet_length").get_uint() - headers_size;
-    size_t uncomp_header_size = 0;
-    unsigned char *comp_buff = new unsigned char [comp_header_size];
-    unsigned char *uncomp_buff = new unsigned char [comp_header_size + EXTRA_LENGHT_UNCOMP];
-  
-    // Initialize the decompression data structures 
-    int index_comp_buff = 0;
-    const char *c = get_packet().prepend(0);
-    for (int i = 0; i < (int) comp_header_size ; ++i) {
-      comp_buff[index_comp_buff] = *c;
-      ++index_comp_buff;
-      ++c;
-    }
-
-    // Perform the header decompression
-    rohc_d_ent.decompress_header(comp_buff, uncomp_buff, (size_t) comp_header_size, &uncomp_header_size);
-	
-    printf("N Bytes: %d\n", (int) uncomp_header_size);
-    for (size_t i = 0; i < uncomp_header_size; ++i) printf("0x%.2x ", uncomp_buff[i]);
-    printf("\n");
-	
-    // Remove the compressed header inside the payload
-    get_packet().remove(comp_header_size);
-    // Positionate the head of the buffer to put the uncompressed header inside the payload
-    char *payload_start = get_packet().prepend(uncomp_header_size);
-    // Overwrite the packet headers with the uncompressed one
-    for (int i = 0; i < (int) uncomp_header_size; ++i)
-      payload_start[i] = uncomp_buff[i];	
- 		
-    for (int i = extracted_headers.size() - 1; i >= 0; --i) {
-      payload_start = get_packet().prepend(extracted_headers[i]->get_nbytes_packet());			
-      extracted_headers[i]->deparse(payload_start);
-      extracted_headers[i]->mark_invalid();
-    }
-
-    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    printf("Decompression execution time: %lu useconds\n", (uint64_t) duration);
-
-  }
-};
-
-REGISTER_PRIMITIVE(rohc_decomp_header);
 
 // compressed_header: reference to the compressed header
 // uncompressed_header: reference to the uncompressed header
