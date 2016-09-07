@@ -167,7 +167,6 @@ action _decompress() {
 action _compress () {
     //ipv4.ttl = ipv4.ttl - 1;
     my_rohc_comp.rohc_comp_header();
-    //rohc_comp_header();
     modify_field(ethernet.etherType, 0xDD00);
 }
 

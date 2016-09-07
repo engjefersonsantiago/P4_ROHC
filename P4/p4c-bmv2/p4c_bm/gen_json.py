@@ -798,7 +798,7 @@ def dump_actions(json_dict, hlir, p4_v1_1=False):
                                  + "_" + call[0].name 
                 primitive_dict["op"] = primitive_name
                 print(primitive_name)
-                args = [call[0].parent.name] #call[1] for parameterized functions ??
+                args = [call[0].parent.name] + call[1]
             else:
                 primitive_name = call[0].name 
                 primitive_dict["op"] = primitive_name
