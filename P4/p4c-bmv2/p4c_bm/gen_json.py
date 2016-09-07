@@ -1206,7 +1206,7 @@ def dump_extern_instances(json_dict, hlir):
             attribute_dict = OrderedDict()
             attribute_dict["name"] = attribute
             attribute_dict["type"] = "hexstr"
-            attribute_dict["value"] = attr[1:]
+            attribute_dict["value"] = attr.strip()
 
             attributes.append(attribute_dict)
 
