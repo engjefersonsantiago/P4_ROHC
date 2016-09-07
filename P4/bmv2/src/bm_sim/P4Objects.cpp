@@ -244,8 +244,6 @@ P4Objects::init_objects(std::istream *is,
       return 1;
     }
 
-    printf("Found Ext instance\n");
-
     instance->_register_attributes();
 
     instance->_set_name_and_id(extern_instance_name, extern_instance_id);
@@ -254,16 +252,10 @@ P4Objects::init_objects(std::istream *is,
     const Json::Value &cfg_extern_attributes =
         cfg_extern_instance["attribute_values"];
     
-
-    printf("Found Ext att\n");
-   
     for (const auto &cfg_extern_attribute : cfg_extern_attributes) {
-      printf("Found Ext att loop\n");
       // only hexstring accepted
       const string name = cfg_extern_attribute["name"].asString();
-      outstream << "Found Ext Att name: " << name << "\n";
       const string type = cfg_extern_attribute["type"].asString();
-      outstream << "Found Ext Att type: " << type << "\n";
 
       if (!instance->_has_attribute(name)) {
         outstream << "Extern type '" << extern_type_name
@@ -281,14 +273,10 @@ P4Objects::init_objects(std::istream *is,
       }
     }
     
-    printf("Ext att setted\n");
-
     instance->init();
-    printf("Ext instance initialized\n");
 
     add_extern_instance(extern_instance_name, std::move(instance));
     
-    printf("Added Ext instance\n");
   }
 
   // parsers
@@ -603,7 +591,6 @@ P4Objects::init_objects(std::istream *is,
 
       for (const auto &cfg_parameter : cfg_primitive_parameters) {
         const string type = cfg_parameter["type"].asString();
-        outstream << "Found type: " << type << "\n";
 
         if (type == "hexstr") {
           const string value_hexstr = cfg_parameter["value"].asString();
@@ -677,13 +664,9 @@ P4Objects::init_objects(std::istream *is,
                 std::unique_ptr<ArithExpression>(idx_expr));
           }
         } else if (type == "extern") {
-          outstream << "I am extern -------\n";
           const string name = cfg_parameter["value"].asString();
-          outstream << "I am extern: "<< name<<"\n";
           ExternType *extern_instance = get_extern_instance(name);
-          outstream << "Get extern\n";
           action_fn->parameter_push_back_extern_instance(extern_instance);
-          outstream << "Pushback extern instance\n";
         } else {
           assert(0 && "parameter not supported");
         }

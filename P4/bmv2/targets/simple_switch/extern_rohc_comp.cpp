@@ -23,6 +23,8 @@
 #include <bm/bm_sim/extern.h>
 #include <rohc/rohc_compressor_module.h>
 
+using namespace std;
+
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
@@ -56,13 +58,8 @@ class ExternRohcCompressor : public ExternType {
 
   // Init variables
   void init() override {
-    printf("Here 1\n");
     dbg_en = (bool)verbose.get<unsigned int>() == DEBUG_MODE;
-    printf("Here 2\n");
-    init_done = true;
-    //if (!init_done)
-      rohc_c_ent.compress_init(dbg_en);
-    printf("Here 3\n");
+    rohc_c_ent.compress_init(dbg_en);
   }
 
   // External ROHC compressor entity
@@ -113,11 +110,6 @@ class ExternRohcCompressor : public ExternType {
       h->mark_invalid();
     }
 
-    printf("Uncompressed packet:\n");
-    for (size_t i = 0; i < uncomp_headers_size; ++i) 
-      printf("0x%.2x ", uncomp_buff[i]);
-    printf("\n");
-    
     // Perform the header decompression
     rohc_c_ent.compress_header(
         comp_buff,
@@ -127,12 +119,6 @@ class ExternRohcCompressor : public ExternType {
 
     comp_header_size -= payload_size;
 
-    printf("Compressed packet:\n");
-    printf("N Bytes: %d\n", (int) comp_header_size);
-    for (size_t i = 0; i < comp_header_size; ++i) 
-      printf("0x%.2x ", comp_buff[i]);
-    printf("\n");
-  
     // Positionate the head of the buffer to put the compressed header
     // inside the payload
     char *payload_start = get_packet().prepend(comp_header_size);
@@ -145,7 +131,7 @@ class ExternRohcCompressor : public ExternType {
         std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>
         (t2 - t1).count();
-    printf("Compression execution time: %lu useconds\n", (uint64_t) duration);
+    cout << "Compression execution time: " << duration << " useconds\n";
 
   }
 
@@ -158,8 +144,7 @@ class ExternRohcCompressor : public ExternType {
   
   // Stateful parameters
   bool dbg_en{true};
-  RohcCompressorEntity rohc_c_ent;// = {false, false};
-  bool init_done = false;
+  RohcCompressorEntity rohc_c_ent;
 
 };
 

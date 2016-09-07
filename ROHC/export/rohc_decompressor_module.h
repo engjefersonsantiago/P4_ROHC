@@ -45,48 +45,51 @@ extern "C"
 namespace ROHC {
 
 class RohcDecompressorEntity {
-  bool debug_en;
-
-	public:
-		/* Prototypes */
-		void dump_packet(const struct rohc_buf packet);
-		int decompress_init(bool debug_enable);
-		int decompress_header(unsigned char *compressed_header_buffer,
-                          unsigned char *uncompressed_header_buffer,
-								          size_t comp_header_size,
-                          size_t* uncomp_header_size);
-
-		virtual ~RohcDecompressorEntity();
-
-    RohcDecompressorEntity (bool dbg_en = true) : debug_en(dbg_en) {} 
-
-	private:
-		// define ROHC decompressor
-		// There is a best way to keep the state of the compressor instead declaring it as global?
-		struct rohc_decomp *decomp_state;       /* the ROHC decompressor */
-    int init_status = decompress_init(debug_en);
-    bool decomp_debug_enable = debug_en;
-    static void print_rohc_traces(void *const priv_ctxt __attribute__((unused)),
-		                              const rohc_trace_level_t level,
-		                              const rohc_trace_entity_t entity __attribute__((unused)),
-		                              const int profile __attribute__((unused)),
-		                              const char *const format,
-		                              ...)
-		{
-			const char *level_descrs[] =
-			{
-				[ROHC_TRACE_DEBUG]   = "DEBUG",
-				[ROHC_TRACE_INFO]    = "INFO",
-				[ROHC_TRACE_WARNING] = "WARNING",
-				[ROHC_TRACE_ERROR]   = "ERROR"
-			};
-			va_list args;
-			
-      fprintf(stdout, "[%s] ", level_descrs[level]);
-			va_start(args, format);
-			vfprintf(stdout, format, args);
-			va_end(args);
-		}
+ bool default_start, debug_en;
+ 
+ public:
+ 	/* Prototypes */
+ 	void dump_packet(const struct rohc_buf packet);
+ 	int decompress_init(bool debug_enable);
+ 	int decompress_header(unsigned char *compressed_header_buffer,
+                        unsigned char *uncompressed_header_buffer,
+                        size_t comp_header_size,
+                        size_t* uncomp_header_size);
+ 
+ 	virtual ~RohcDecompressorEntity();
+  
+  RohcDecompressorEntity (bool start = false, bool dbg_en = false)
+     : default_start(start), debug_en(dbg_en) {} 
+ 
+ private:
+ 	// define ROHC decompressor
+ 	// There is a best way to keep the state of the 
+  // decompressor instead declaring it as global?
+ 	struct rohc_decomp *decomp_state;       /* the ROHC decompressor */
+  int init_status = (default_start) ? decompress_init(debug_en) : -1;
+  bool decomp_debug_enable = debug_en;
+  static void print_rohc_traces(void *const priv_ctxt
+                                                        __attribute__((unused)),
+ 	                              const rohc_trace_level_t level,
+ 	                              const rohc_trace_entity_t entity 
+                                                        __attribute__((unused)),
+ 	                              const int profile
+                                                        __attribute__((unused)),
+ 	                              const char *const format, ...) {
+    const char *level_descrs[] =
+    {
+      [ROHC_TRACE_DEBUG]   = "DEBUG",
+      [ROHC_TRACE_INFO]    = "INFO",
+      [ROHC_TRACE_WARNING] = "WARNING",
+      [ROHC_TRACE_ERROR]   = "ERROR"
+    };
+    va_list args;
+    
+    fprintf(stdout, "[%s] ", level_descrs[level]);
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);
+ 	}
 
 };
 

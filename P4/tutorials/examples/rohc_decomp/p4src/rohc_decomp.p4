@@ -117,7 +117,7 @@ extern_type ExternRohcCompressor {
 }
 
 extern ExternRohcCompressor my_rohc_comp {
-  verbose: 0x01;
+  verbose: 0x00;
 }
 
 extern_type ExternRohcDecompressor {
@@ -134,7 +134,7 @@ extern_type ExternRohcDecompressor {
 }
 
 extern ExternRohcDecompressor my_rohc_decomp {
-  verbose: 0x01;
+  verbose: 0x00;
 }
 
 

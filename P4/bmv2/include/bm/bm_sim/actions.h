@@ -374,7 +374,6 @@ const RegisterArray &ActionParam::to<const RegisterArray &>(
 template <> inline
 ExternType *ActionParam::to<ExternType *>(ActionEngineState *state) const {
   (void) state;
-  std::cout << "tag: " << tag << ", ParaM Exp: " <<ActionParam::EXTERN_INSTANCE << "\n";
 
   assert(tag == ActionParam::EXTERN_INSTANCE);
   return extern_instance;

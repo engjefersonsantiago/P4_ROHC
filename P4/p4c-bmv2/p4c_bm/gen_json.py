@@ -766,7 +766,6 @@ def dump_actions(json_dict, hlir, p4_v1_1=False):
     table_actions_set = set()
     for _, table in hlir.p4_tables.items():
         for action in table.actions:
-            ##print(action)
             table_actions_set.add(action)
 
     for action in table_actions_set:
@@ -793,16 +792,13 @@ def dump_actions(json_dict, hlir, p4_v1_1=False):
             primitive_dict = OrderedDict()
 
             if type(call[0]) is p4.p4_extern_method:
-                print(call)
                 primitive_name = "_"+ call[0].parent.extern_type.name \
                                  + "_" + call[0].name 
                 primitive_dict["op"] = primitive_name
-                print(primitive_name)
                 args = [call[0].parent.name] + call[1]
             else:
                 primitive_name = call[0].name 
                 primitive_dict["op"] = primitive_name
-                print(primitive_name)
                 args = call[1]
 
             # backwards compatibility with older P4 programs
@@ -822,7 +818,6 @@ def dump_actions(json_dict, hlir, p4_v1_1=False):
             primitive_args = []
             for arg in args:
                 arg_dict = OrderedDict()
-                print(arg)
                 if type(arg) is int or type(arg) is long:
                     arg_dict["type"] = "hexstr"
                     arg_dict["value"] = format_hexstr(arg)
@@ -1233,9 +1228,8 @@ def json_dict_create(hlir, path_field_aliases=None, p4_v1_1=False):
     reset_static_vars()
     json_dict = OrderedDict()
 
-    #if p4_v1_1 and hlir.p4_extern_instances:  # pragma: no cover
-    #    LOG_CRITICAL("no extern types supported by bmv2 yet")
-    #    return json_dict
+    if p4_v1_1 and hlir.p4_extern_instances:  # pragma: no cover
+        LOG_WARNING("Initial support for extern types: be aware!")
 
     dump_header_types(json_dict, hlir)
     dump_headers(json_dict, hlir)

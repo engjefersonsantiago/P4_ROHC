@@ -26,6 +26,8 @@
 // Used to define enough space to extract the compressed header to the uncomp_buffer
 #define EXTRA_LENGHT_UNCOMP 80
 
+using namespace std;
+
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
@@ -59,13 +61,8 @@ class ExternRohcDecompressor : public ExternType {
 
   // Init variables
   void init() override {
-    printf("Here 1\n");
     dbg_en = (bool)verbose.get<unsigned int>() == DEBUG_MODE;
-    printf("Here 2\n");
-    init_done = true;
-    //if (!init_done)
-      rohc_d_ent.decompress_init(dbg_en);
-    printf("Here 3\n");
+    rohc_d_ent.decompress_init(dbg_en);
   }
 
   // Decompressor primitive
@@ -84,9 +81,6 @@ class ExternRohcDecompressor : public ExternType {
         headers_size += header.get_nbytes_packet();
       }
     }
-    printf("PKT LEN : %u \n", phv->get_field("standard_metadata.packet_length")
-        .get_uint());
-    printf("HDR LEN : %u \n", (unsigned int) headers_size);
     
     size_t comp_header_size = phv->get_field("standard_metadata.packet_length")
         .get_uint() - headers_size;
@@ -110,11 +104,6 @@ class ExternRohcDecompressor : public ExternType {
                                  (size_t) comp_header_size,
                                  &uncomp_header_size);
     
-    printf("N Bytes: %d\n", (int) uncomp_header_size);
-    for (size_t i = 0; i < uncomp_header_size; ++i)
-      printf("0x%.2x ", uncomp_buff[i]);
-    printf("\n");
-    
     // Remove the compressed header inside the payload
     get_packet().remove(comp_header_size);
     // Positionate the head of the buffer to put the uncompressed 
@@ -135,8 +124,8 @@ class ExternRohcDecompressor : public ExternType {
         std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>
         (t2 - t1).count();
-    printf("Decompression execution time: %lu useconds\n", (uint64_t) duration);
-  
+    cout << "Decompression execution time: " << duration << " useconds\n";
+ 
   }
 
   // Default constructor/destructor
@@ -148,8 +137,7 @@ class ExternRohcDecompressor : public ExternType {
   
   // Stateful parameters
   bool dbg_en{true};
-  RohcDecompressorEntity rohc_d_ent;// = {false, false};
-  bool init_done = false;
+  RohcDecompressorEntity rohc_d_ent;
 
 };
 
