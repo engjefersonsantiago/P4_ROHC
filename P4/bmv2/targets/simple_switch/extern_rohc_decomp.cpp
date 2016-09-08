@@ -32,20 +32,10 @@ template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
 
 using bm::Data;
-using bm::Field;
 using bm::Header;
-using bm::MeterArray;
-using bm::CounterArray;
-using bm::RegisterArray;
-using bm::NamedCalculation;
-using bm::HeaderStack;
 using bm::PHV;
 using bm::ExternType;
-using bm::ActionFnEntry;
-using bm::ActionFn;
-using bm::ActionPrimitive_;
-using bm::ActionOpcodesMap;
-using bm::P4Objects;
+
 using ROHC::RohcDecompressorEntity;
 
 class ExternRohcDecompressor : public ExternType {
