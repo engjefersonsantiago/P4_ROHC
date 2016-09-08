@@ -17,7 +17,6 @@
  * Jeferson Santiago da Silva (eng.jefersonsantiago@gmail.com)
  */
 
-#include <cassert>
 #include <chrono>
 
 #include <bm/bm_sim/extern.h>
